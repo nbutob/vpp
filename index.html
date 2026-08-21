@@ -220,7 +220,7 @@
 "use strict";
 
 /* ================= STORAGE (Google Sheet nhiều tab qua Apps Script) ================= */
-const API_URL = 'https://script.google.com/macros/s/AKfycbyAG8uZrIjwiMXXaElI27v2Izorn4GOOgzcxu4YcEyMadFLRF4KtgQPsZqv9a3fDJo-/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzuwDTJvxzRCxVSI5NJoiD48kTAeMQc7vqHcgteV3ysfq9tEWNmdzfUVdT1--XP1I0q/exec';
 
 async function loadTable(sheetName){
   try{
@@ -259,6 +259,16 @@ async function loadItems(){
 async function saveItems(){
   const rows = ITEMS.map(it => ({ id: it.id, code: it.code, name: it.name, unit: it.unit, category: it.category||'', stock: it.stock }));
   return saveTable('TonKho', rows);
+}
+
+async function loadDepartments(){
+  let rows = await loadTable('BoPhan');
+  if(rows.length === 0){
+    const defaults = ['Cơ điện','Văn phòng','Tổ cắt','Tổ ủi','Chuyền 1','Chuyền 2','Chuyền 3','Chuyền 4','Chuyền 5'];
+    await saveTable('BoPhan', defaults.map(name => ({ name })));
+    return defaults;
+  }
+  return rows.map(r => String(r.name||'')).filter(Boolean);
 }
 
 async function loadIssuers(){
@@ -342,7 +352,7 @@ async function saveProposals(){
   return saveTable('DeXuat', rows);
 }
 
-let ITEMS = [], VOUCHERS = [], STOCKINS = [], ISSUERS = [], PROPOSALS = [];
+let ITEMS = [], VOUCHERS = [], STOCKINS = [], ISSUERS = [], PROPOSALS = [], DEPARTMENTS = [];
 let currentIssuer = null; // {id, username, fullName} — phiên chỉ tồn tại trong bộ nhớ, mất khi tải lại trang
 
 async function sha256Hex(str){
@@ -580,7 +590,12 @@ function renderVoucherForm(){
     <div class="muted" style="margin-bottom:16px;">Điền thông tin người nhận và ký xác nhận. Phiếu sẽ chuyển tới người cấp phát để duyệt.</div>
     <div class="grid2">
       <div class="field"><label>Họ tên người nhận *</label><input type="text" id="f-receiver" placeholder="Nguyễn Văn A"></div>
-      <div class="field"><label>Bộ phận / Phòng ban *</label><input type="text" id="f-department" placeholder="Phòng Kế toán"></div>
+      <div class="field"><label>Bộ phận / Phòng ban *</label>
+        <select id="f-department">
+          <option value="">— Chọn bộ phận —</option>
+          ${DEPARTMENTS.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}
+        </select>
+      </div>
     </div>
     <div class="field"><label>Ngày lập phiếu</label><input type="date" id="f-date" value="${todayISO()}"></div>
 
@@ -1291,8 +1306,8 @@ async function onSubmitNhapKho(){
 
 /* ================= INIT ================= */
 async function init(){
-  [ITEMS, VOUCHERS, STOCKINS, ISSUERS, PROPOSALS] = await Promise.all([
-    loadItems(), loadVouchers(), loadStockIns(), loadIssuers(), loadProposals()
+  [ITEMS, VOUCHERS, STOCKINS, ISSUERS, PROPOSALS, DEPARTMENTS] = await Promise.all([
+    loadItems(), loadVouchers(), loadStockIns(), loadIssuers(), loadProposals(), loadDepartments()
   ]);
   let needsMigration = false;
   ITEMS.forEach(it => { if(!it.code){ it.code = genItemCode(); needsMigration = true; } });
