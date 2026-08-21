@@ -141,6 +141,12 @@
   .issuer-name{font-weight:700;font-size:14.5px;}
   .issuer-sub{font-size:12.5px;color:var(--sage);}
 
+  .suggest-box{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);z-index:20;max-height:220px;overflow-y:auto;margin-top:4px;}
+  .suggest-item{padding:9px 12px;font-size:13.5px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .suggest-item:last-child{border-bottom:none;}
+  .suggest-item:hover{background:var(--paper-2);}
+  .suggest-empty{padding:9px 12px;font-size:12.5px;color:var(--sage);}
+
   /* Landing page */
   .landing-wrap{padding:40px 4px 20px 4px;text-align:center;}
   .landing-title{font-size:26px;margin-bottom:6px;}
@@ -837,35 +843,68 @@ function renderProposalDetail(){
 }
 
 /* ---- Nhập kho (issuer) ---- */
-function niItemOptionsHtml(selectedId){
-  return ITEMS.slice().sort((a,b)=>a.name.localeCompare(b.name,'vi'))
-    .map(it => `<option value="${it.id}" ${selectedId===it.id?'selected':''}>[${esc(it.code)}] ${esc(it.name)} (tồn: ${it.stock} ${esc(it.unit)})</option>`).join('');
+let openSuggestion = { rowId: null, field: null }; // theo dõi ô gợi ý đang mở trong Nhập kho
+
+function itemSuggestList(field, query){
+  const q = (query||'').trim().toLowerCase();
+  if(!q) return [];
+  return ITEMS.filter(it => field==='name' ? it.name.toLowerCase().includes(q) : it.code.toLowerCase().includes(q)).slice(0, 8);
+}
+function suggestBoxHtml(row, field){
+  if(openSuggestion.rowId !== row.rowId || openSuggestion.field !== field) return '';
+  const query = field==='name' ? row.nameQuery : row.codeQuery;
+  if(!(query||'').trim()) return '';
+  const matches = itemSuggestList(field, query);
+  if(matches.length === 0) return `<div class="suggest-box"><div class="suggest-empty">Không tìm thấy — bấm "＋ Vật phẩm chưa có trong kho" bên dưới để thêm mới.</div></div>`;
+  return `<div class="suggest-box">${matches.map(it => `<div class="suggest-item" data-pick-item="${it.id}" data-row="${row.rowId}">[${esc(it.code)}] ${esc(it.name)} <span class="muted">— tồn ${it.stock} ${esc(it.unit)}</span></div>`).join('')}</div>`;
 }
 function niRowHtml(row){
   const isNew = row.itemId === '__new__';
   const item = ITEMS.find(i => i.id === row.itemId);
+  const nameVal = item ? item.name : (row.nameQuery||'');
+  const codeVal = item ? item.code : (row.codeQuery||'');
   return `
   <div class="card" style="background:var(--paper);padding:14px;margin-bottom:10px;" data-nirow="${row.rowId}">
-    <div class="item-row" style="grid-template-columns:1fr 90px 34px;">
-      <div><select class="ni-row-item">
-        <option value="">— Chọn vật phẩm có sẵn —</option>
-        ${niItemOptionsHtml(row.itemId)}
-        <option value="__new__" ${isNew?'selected':''}>＋ Thêm vật phẩm mới…</option>
-      </select>${item ? `<div class="stockhint">Mã: ${esc(item.code)} · Tồn hiện tại: ${item.stock} ${esc(item.unit)}</div>` : ''}</div>
+    ${!isNew ? `
+    <div class="grid2">
+      <div class="field autocomplete-field" style="margin-bottom:0;position:relative;">
+        <label>Tên vật phẩm</label>
+        <input type="text" class="ni-row-nameinput" autocomplete="off" placeholder="Gõ để tìm theo tên..." value="${esc(nameVal)}">
+        ${suggestBoxHtml(row, 'name')}
+      </div>
+      <div class="field autocomplete-field" style="margin-bottom:0;position:relative;">
+        <label>Mã VP</label>
+        <input type="text" class="ni-row-codeinput" autocomplete="off" placeholder="Gõ để tìm theo mã..." value="${esc(codeVal)}">
+        ${suggestBoxHtml(row, 'code')}
+      </div>
+    </div>
+    <div class="item-row" style="grid-template-columns:1fr 90px 34px;margin-top:10px;">
+      <div>${item ? `<div class="stockhint">Đơn vị: ${esc(item.unit)} · Tồn hiện tại: ${item.stock} ${esc(item.unit)}</div>` : `<div class="stockhint">Chưa chọn vật phẩm</div>`}</div>
       <div><input type="number" min="1" class="ni-row-qty" placeholder="SL nhập" value="${esc(row.qty)}"></div>
       <button type="button" class="rm-nirow" title="Xóa dòng">✕</button>
     </div>
-    ${isNew ? `
-    <div class="grid2" style="margin-top:10px;">
+    <button type="button" class="btn btn-sm ni-row-newtoggle" style="margin-top:8px;">＋ Vật phẩm chưa có trong kho? Thêm mới</button>
+    ` : `
+    <div class="row" style="margin-bottom:8px;">
+      <div class="muted">Đang thêm vật phẩm mới vào phiếu</div>
+      <button type="button" class="btn btn-sm ni-row-backsearch">← Quay lại tìm kiếm</button>
+    </div>
+    <div class="grid2">
       <div class="field"><label>Tên vật phẩm mới *</label><input type="text" class="ni-row-newname" placeholder="VD: Bút bi Thiên Long" value="${esc(row.newName||'')}"></div>
       <div class="field"><label>Đơn vị tính *</label><input type="text" class="ni-row-newunit" list="dl-units" placeholder="Cái / Hộp / Cây..." value="${esc(row.newUnit||'')}"></div>
     </div>
     <div class="field" style="margin-bottom:0;"><label>Danh mục</label><input type="text" class="ni-row-newcat" list="dl-categories" placeholder="Văn phòng phẩm..." value="${esc(row.newCategory||'')}"></div>
-    <div class="muted" style="margin-top:6px;">Mã vật phẩm sẽ được hệ thống tự cấp, không trùng.</div>` : ''}
+    <div class="muted" style="margin-top:6px;">Mã vật phẩm sẽ được hệ thống tự cấp, không trùng.</div>
+    <div class="item-row" style="grid-template-columns:1fr 90px 34px;margin-top:10px;">
+      <div></div>
+      <div><input type="number" min="1" class="ni-row-qty" placeholder="SL nhập" value="${esc(row.qty)}"></div>
+      <button type="button" class="rm-nirow" title="Xóa dòng">✕</button>
+    </div>
+    `}
   </div>`;
 }
 function renderNhapKho(){
-  if(niRows.length === 0) niRows = [{rowId: uid(), itemId:'', qty:'', newName:'', newUnit:'', newCategory:''}];
+  if(niRows.length === 0) niRows = [{rowId: uid(), itemId:'', qty:'', nameQuery:'', codeQuery:'', newName:'', newUnit:'', newCategory:''}];
   const history = STOCKINS.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,20);
   return `
   <div class="card">
@@ -1057,15 +1096,53 @@ function bindEvents(){
 
   /* Nhập kho (issuer) */
   const addNiRow = document.getElementById('btn-ni-add-row');
-  if(addNiRow) addNiRow.onclick = () => { syncNiRowsFromDOM(); niRows.push({rowId: uid(), itemId:'', qty:'', newName:'', newUnit:'', newCategory:''}); render(); };
+  if(addNiRow) addNiRow.onclick = () => { syncNiRowsFromDOM(); niRows.push({rowId: uid(), itemId:'', qty:'', nameQuery:'', codeQuery:'', newName:'', newUnit:'', newCategory:''}); openSuggestion = {rowId:null, field:null}; render(); };
   document.querySelectorAll('.rm-nirow').forEach(btn => btn.onclick = (e) => {
     syncNiRowsFromDOM();
     const rowEl = e.target.closest('[data-nirow]');
     niRows = niRows.filter(r => r.rowId !== rowEl.dataset.nirow);
-    if(niRows.length===0) niRows = [{rowId: uid(), itemId:'', qty:'', newName:'', newUnit:'', newCategory:''}];
+    if(niRows.length===0) niRows = [{rowId: uid(), itemId:'', qty:'', nameQuery:'', codeQuery:'', newName:'', newUnit:'', newCategory:''}];
+    openSuggestion = {rowId:null, field:null};
     render();
   });
-  document.querySelectorAll('.ni-row-item').forEach(sel => sel.onchange = () => { syncNiRowsFromDOM(); render(); });
+  document.querySelectorAll('.ni-row-nameinput').forEach(el => el.oninput = (e) => {
+    syncNiRowsFromDOM();
+    const rowEl = e.target.closest('[data-nirow]');
+    const row = niRows.find(r => r.rowId === rowEl.dataset.nirow);
+    row.itemId = ''; row.nameQuery = e.target.value;
+    openSuggestion = { rowId: row.rowId, field: 'name' };
+    renderNhapKhoInPlace(`[data-nirow="${row.rowId}"] .ni-row-nameinput`);
+  });
+  document.querySelectorAll('.ni-row-codeinput').forEach(el => el.oninput = (e) => {
+    syncNiRowsFromDOM();
+    const rowEl = e.target.closest('[data-nirow]');
+    const row = niRows.find(r => r.rowId === rowEl.dataset.nirow);
+    row.itemId = ''; row.codeQuery = e.target.value;
+    openSuggestion = { rowId: row.rowId, field: 'code' };
+    renderNhapKhoInPlace(`[data-nirow="${row.rowId}"] .ni-row-codeinput`);
+  });
+  document.querySelectorAll('.suggest-item').forEach(el => el.onclick = () => {
+    syncNiRowsFromDOM();
+    const row = niRows.find(r => r.rowId === el.dataset.row);
+    if(row){ row.itemId = el.dataset.pickItem; row.nameQuery = ''; row.codeQuery = ''; }
+    openSuggestion = { rowId: null, field: null };
+    render();
+  });
+  document.querySelectorAll('.ni-row-newtoggle').forEach(el => el.onclick = (e) => {
+    syncNiRowsFromDOM();
+    const rowEl = e.target.closest('[data-nirow]');
+    const row = niRows.find(r => r.rowId === rowEl.dataset.nirow);
+    if(row){ row.itemId = '__new__'; }
+    openSuggestion = { rowId: null, field: null };
+    render();
+  });
+  document.querySelectorAll('.ni-row-backsearch').forEach(el => el.onclick = (e) => {
+    syncNiRowsFromDOM();
+    const rowEl = e.target.closest('[data-nirow]');
+    const row = niRows.find(r => r.rowId === rowEl.dataset.nirow);
+    if(row){ row.itemId = ''; row.nameQuery = ''; row.codeQuery = ''; }
+    render();
+  });
   const submitNK = document.getElementById('btn-submit-nhapkho'); if(submitNK) submitNK.onclick = onSubmitNhapKho;
 
   /* Theo dõi (issuer) */
@@ -1092,6 +1169,17 @@ function renderLookupInPlace(){
   bindEvents();
   const el = document.getElementById('lookup-input');
   if(el){ el.focus(); el.setSelectionRange(lookupName.length, lookupName.length); }
+  window.scrollTo(0, scrollY);
+}
+function renderNhapKhoInPlace(focusSelector){
+  const app = document.getElementById('app');
+  const scrollY = window.scrollY;
+  app.innerHTML = renderNhapKho();
+  bindEvents();
+  if(focusSelector){
+    const el = document.querySelector(focusSelector);
+    if(el){ el.focus(); if(el.setSelectionRange) el.setSelectionRange(el.value.length, el.value.length); }
+  }
   window.scrollTo(0, scrollY);
 }
 function renderTheoDoiInPlace(){
@@ -1121,7 +1209,9 @@ function syncPRowsFromDOM(){
 function syncNiRowsFromDOM(){
   document.querySelectorAll('#ni-rows [data-nirow]').forEach(rowEl => {
     const row = niRows.find(r => r.rowId === rowEl.dataset.nirow); if(!row) return;
-    row.itemId = rowEl.querySelector('.ni-row-item').value; row.qty = rowEl.querySelector('.ni-row-qty').value;
+    const qtyEl = rowEl.querySelector('.ni-row-qty'); if(qtyEl) row.qty = qtyEl.value;
+    const nameInputEl = rowEl.querySelector('.ni-row-nameinput'); if(nameInputEl) row.nameQuery = nameInputEl.value;
+    const codeInputEl = rowEl.querySelector('.ni-row-codeinput'); if(codeInputEl) row.codeQuery = codeInputEl.value;
     const nameEl = rowEl.querySelector('.ni-row-newname'); const unitEl = rowEl.querySelector('.ni-row-newunit'); const catEl = rowEl.querySelector('.ni-row-newcat');
     if(nameEl) row.newName = nameEl.value; if(unitEl) row.newUnit = unitEl.value; if(catEl) row.newCategory = catEl.value;
   });
@@ -1314,6 +1404,12 @@ async function init(){
   if(needsMigration) await saveItems();
   render();
 }
+document.addEventListener('mousedown', (e) => {
+  if(openSuggestion.rowId && !e.target.closest('.autocomplete-field')){
+    openSuggestion = { rowId: null, field: null };
+    if(issuerTab === 'nhapkho' && appMode === 'issuer') render();
+  }
+});
 init();
 
 })();
