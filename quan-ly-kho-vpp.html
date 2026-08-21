@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Kho Nội Bộ — Cấp phát · Đề xuất · Nhập kho · Theo dõi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C2321;
+    --paper:#F7F5F0;
+    --paper-2:#EFEBE2;
+    --line:#DBD5C6;
+    --teal:#1F3A3D;
+    --teal-2:#2E5254;
+    --sage:#5B7B72;
+    --amber:#C8842A;
+    --amber-bg:#FBF0DE;
+    --red:#B4432E;
+    --red-bg:#FBE7E2;
+    --green:#3F7A54;
+    --green-bg:#E6F1E7;
+    --blue:#2E5C8A;
+    --blue-bg:#E7EFF7;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(28,35,33,.06), 0 4px 16px rgba(28,35,33,.05);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);}
+  h1,h2,h3,h4{font-family:'Space Grotesk',-apple-system,sans-serif;margin:0;letter-spacing:-.01em;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;font-size:15px;}
+  .app{max-width:980px;margin:0 auto;padding-bottom:60px;}
+
+  header.topbar{position:sticky;top:0;z-index:30;background:var(--teal);color:#fff;box-shadow:var(--shadow);}
+  .topbar-inner{max-width:980px;margin:0 auto;padding:14px 16px 0 16px;}
+  .topbar-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:700;font-size:19px;padding-bottom:12px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);}
+  #header-side{padding-top:2px;}
+  .side-info{font-size:12.5px;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;text-align:right;}
+  .linklike{background:none;border:none;color:#fff;font-weight:700;font-size:12.5px;text-decoration:underline;padding:0;white-space:nowrap;}
+  .linklike:hover{opacity:.8;}
+  .tabs{display:flex;gap:2px;overflow-x:auto;}
+  .tab{background:transparent;border:none;color:rgba(255,255,255,.65);padding:10px 14px 12px 14px;font-weight:600;font-size:14px;border-bottom:3px solid transparent;white-space:nowrap;}
+  .tab.active{color:#fff;border-bottom-color:var(--amber);}
+
+  main{padding:18px 16px 0 16px;}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .card h3{font-size:16px;margin-bottom:2px;}
+  .muted{color:var(--sage);font-size:13.5px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .btn{border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 16px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;}
+  .btn:hover{background:var(--paper-2);}
+  .btn-primary{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .btn-primary:hover{background:var(--teal-2);}
+  .btn-green{background:var(--green);border-color:var(--green);color:#fff;}
+  .btn-red{background:#fff;border-color:var(--red);color:var(--red);}
+  .btn-red:hover{background:var(--red-bg);}
+  .btn-sm{padding:6px 10px;font-size:13px;}
+  .btn-block{width:100%;justify-content:center;}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+
+  label{display:block;font-size:13px;font-weight:600;color:var(--teal);margin:0 0 5px 2px;}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--teal-2);outline-offset:1px;background:#fff;}
+  .field{margin-bottom:13px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr;}}
+
+  .item-row{display:grid;grid-template-columns:1fr 90px 70px 34px;gap:8px;align-items:end;margin-bottom:8px;}
+  @media(max-width:560px){.item-row{grid-template-columns:1fr 1fr;grid-template-areas:"a a" "b c" "d d"; row-gap:6px;}
+    .item-row > *:nth-child(1){grid-area:a;} .item-row > *:nth-child(2){grid-area:b;} .item-row > *:nth-child(3){grid-area:c;} .item-row > *:nth-child(4){grid-area:d;justify-self:end;}}
+  .item-row .stockhint{font-size:11.5px;color:var(--sage);margin-top:3px;}
+  .rm-row{background:transparent;border:none;color:var(--red);font-size:18px;font-weight:700;padding:8px;}
+
+  .prow{display:grid;grid-template-columns:1.4fr 1fr 80px 34px;gap:8px;align-items:end;margin-bottom:8px;}
+  @media(max-width:560px){.prow{grid-template-columns:1fr 1fr;grid-template-areas:"a a" "b c" "d d"; row-gap:6px;}
+    .prow > *:nth-child(1){grid-area:a;} .prow > *:nth-child(2){grid-area:b;} .prow > *:nth-child(3){grid-area:c;} .prow > *:nth-child(4){grid-area:d;justify-self:end;}}
+
+  .sig-wrap{border:2px dashed var(--line);border-radius:10px;background:var(--paper);position:relative;touch-action:none;}
+  .sig-wrap canvas{display:block;width:100%;height:220px;touch-action:none;}
+  .sig-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#B9B2A0;font-size:14px;pointer-events:none;}
+  .sig-actions{display:flex;justify-content:flex-end;margin-top:6px;}
+
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+  .badge-pending{background:var(--amber-bg);color:var(--amber);}
+  .badge-confirmed{background:var(--green-bg);color:var(--green);}
+  .badge-approved{background:var(--green-bg);color:var(--green);}
+  .badge-rejected{background:var(--red-bg);color:var(--red);}
+  .badge-instock{background:var(--green-bg);color:var(--green);}
+  .badge-outstock{background:var(--red-bg);color:var(--red);}
+  .badge-type-voucher{background:var(--blue-bg);color:var(--blue);}
+  .badge-type-proposal{background:var(--amber-bg);color:var(--amber);}
+
+  .filters{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;}
+  .chip{border:1px solid var(--line);background:#fff;padding:7px 14px;border-radius:20px;font-size:13.5px;font-weight:600;color:var(--sage);white-space:nowrap;}
+  .chip.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .vlist-item{display:flex;justify-content:space-between;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line);}
+  .vlist-item:last-child{border-bottom:none;}
+  .vlist-item:hover{background:var(--paper-2);cursor:pointer;border-radius:6px;}
+  .vcode{font-weight:700;font-size:14.5px;}
+  .vsub{font-size:12.5px;color:var(--sage);margin-top:2px;}
+  .empty{text-align:center;padding:36px 10px;color:var(--sage);}
+  .empty .big{font-size:34px;margin-bottom:8px;}
+
+  .backlink{background:none;border:none;color:var(--teal);font-weight:600;font-size:13.5px;padding:0 0 12px 0;display:flex;align-items:center;gap:4px;}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+  @media(max-width:560px){.detail-grid{grid-template-columns:1fr;}}
+  .kv .k{font-size:12px;color:var(--sage);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+  .kv .v{font-size:15px;font-weight:600;margin-top:2px;}
+  table.items-table{width:100%;border-collapse:collapse;margin:10px 0 16px 0;}
+  table.items-table th{text-align:left;font-size:12px;color:var(--sage);text-transform:uppercase;border-bottom:2px solid var(--line);padding:8px 6px;}
+  table.items-table td{padding:9px 6px;border-bottom:1px solid var(--line);font-size:14.5px;}
+  .sig-preview{border:1px solid var(--line);border-radius:8px;background:var(--paper);height:100px;display:flex;align-items:center;justify-content:center;}
+  .sig-preview img{max-height:90px;max-width:100%;}
+  .sig-preview.empty{color:#B9B2A0;font-size:13px;}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px;text-align:center;}
+  .stat .num{font-family:'Space Grotesk';font-size:26px;font-weight:700;color:var(--teal);}
+  .stat .lbl{font-size:12px;color:var(--sage);font-weight:600;}
+  .stat.warn .num{color:var(--red);}
+  .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .toolbar input,.toolbar select{width:auto;min-width:140px;flex:1;}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;}
+  table.inv-table{width:100%;border-collapse:collapse;min-width:560px;}
+  table.inv-table th{position:sticky;top:0;background:var(--paper-2);text-align:left;font-size:12px;color:var(--teal);text-transform:uppercase;padding:10px 12px;border-bottom:2px solid var(--line);}
+  table.inv-table td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:14.5px;}
+  table.inv-table tr:last-child td{border-bottom:none;}
+  table.inv-table tr.out td{background:var(--red-bg);}
+  table.inv-table td.num{font-variant-numeric:tabular-nums;font-weight:700;}
+
+  .issuer-list-item{display:flex;justify-content:space-between;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line);}
+  .issuer-list-item:last-child{border-bottom:none;}
+  .issuer-name{font-weight:700;font-size:14.5px;}
+  .issuer-sub{font-size:12.5px;color:var(--sage);}
+
+  /* Landing page */
+  .landing-wrap{padding:40px 4px 20px 4px;text-align:center;}
+  .landing-title{font-size:26px;margin-bottom:6px;}
+  .landing-sub{color:var(--sage);font-size:14.5px;margin-bottom:32px;}
+  .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:640px;margin:0 auto;}
+  @media(max-width:560px){.role-grid{grid-template-columns:1fr;}}
+  .role-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px 20px;box-shadow:var(--shadow);text-align:left;cursor:pointer;transition:transform .1s;}
+  .role-card:hover{border-color:var(--teal-2);transform:translateY(-2px);}
+  .role-icon{font-size:34px;margin-bottom:12px;}
+  .role-card h3{font-size:18px;margin-bottom:6px;}
+  .role-card p{color:var(--sage);font-size:13.5px;margin:0;line-height:1.5;}
+  .role-badge{display:inline-block;margin-top:14px;font-size:12.5px;font-weight:700;color:var(--teal);}
+
+  /* Receiver menu */
+  .menu-grid{display:grid;grid-template-columns:1fr;gap:12px;}
+  .menu-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;}
+  .menu-card:hover{background:var(--paper-2);}
+  .menu-icon{font-size:26px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--paper-2);border-radius:10px;flex-shrink:0;}
+  .menu-text h4{font-size:15.5px;margin-bottom:3px;}
+  .menu-text p{margin:0;color:var(--sage);font-size:13px;}
+
+  .lookup-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+  .lookup-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .toast-msg{background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow);animation:up .2s ease;}
+  .toast-msg.err{background:var(--red);}
+  @keyframes up{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  #print-area{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #print-area, #print-area *{visibility:visible;}
+    #print-area{display:block;position:absolute;top:0;left:0;width:100%;padding:20px;}
+    .p-head{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;}
+    .p-title{text-align:center;font-family:'Space Grotesk';font-weight:700;font-size:20px;margin:8px 0 2px 0;}
+    .p-sub{text-align:center;font-size:12.5px;color:#555;margin-bottom:18px;}
+    .p-meta{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:14px;}
+    table.p-table{width:100%;border-collapse:collapse;margin-bottom:26px;}
+    table.p-table th,table.p-table td{border:1px solid #999;padding:7px 9px;font-size:13px;text-align:left;}
+    table.p-table th{background:#eee;}
+    .p-sign{display:flex;justify-content:space-between;margin-top:10px;text-align:center;}
+    .p-sign div{width:46%;}
+    .p-sign .role{font-weight:700;font-size:13.5px;margin-bottom:2px;}
+    .p-sign .note{font-size:11.5px;color:#555;margin-bottom:8px;}
+    .p-sign img{max-height:80px;max-width:100%;margin-bottom:4px;}
+    .p-sign .name{font-weight:700;margin-top:6px;font-size:13.5px;}
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-row">
+      <div class="brand"><span class="dot"></span> Kho Nội Bộ</div>
+      <div id="header-side"></div>
+    </div>
+    <nav class="tabs" id="header-tabs"></nav>
+  </div>
+</header>
+<div class="app">
+  <main id="app"><div class="empty">Đang tải dữ liệu...</div></main>
+</div>
+<div id="toast"></div>
+<div id="print-area"></div>
+
+<datalist id="dl-units">
+  <option value="Cái"><option value="Hộp"><option value="Cây"><option value="Cuộn">
+  <option value="Bộ"><option value="Gói"><option value="Chiếc"><option value="Thùng"><option value="Lố">
+</datalist>
+<datalist id="dl-categories">
+  <option value="Văn phòng phẩm"><option value="Phụ kiện máy móc"><option value="Thiết bị điện tử"><option value="Khác">
+</datalist>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= STORAGE (Google Sheet nhiều tab qua Apps Script) ================= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbyAG8uZrIjwiMXXaElI27v2Izorn4GOOgzcxu4YcEyMadFLRF4KtgQPsZqv9a3fDJo-/exec';
+
+async function loadTable(sheetName){
+  try{
+    const res = await fetch(`${API_URL}?sheet=${encodeURIComponent(sheetName)}`);
+    if(!res.ok) throw new Error('Lỗi mạng: ' + res.status);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    return data.rows || [];
+  }catch(e){
+    console.error(e);
+    toast(`Không tải được dữ liệu "${sheetName}" từ Google Sheet.`, true);
+    return [];
+  }
+}
+async function saveTable(sheetName, rows){
+  try{
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ sheet: sheetName, rows })
+    });
+    const data = await res.json();
+    if(data.error || !data.success) throw new Error(data.error || 'unknown');
+    return true;
+  }catch(e){
+    console.error(e);
+    toast(`Lỗi lưu dữ liệu "${sheetName}" lên Google Sheet, vui lòng thử lại.`, true);
+    return false;
+  }
+}
+
+async function loadItems(){
+  const rows = await loadTable('TonKho');
+  return rows.map(r => ({ id:String(r.id||''), code:String(r.code||''), name:String(r.name||''), unit:String(r.unit||''), category:String(r.category||''), stock:Number(r.stock||0) }));
+}
+async function saveItems(){
+  const rows = ITEMS.map(it => ({ id: it.id, code: it.code, name: it.name, unit: it.unit, category: it.category||'', stock: it.stock }));
+  return saveTable('TonKho', rows);
+}
+
+async function loadIssuers(){
+  const rows = await loadTable('TaiKhoan');
+  return rows.map(r => ({ id:String(r.id||''), username:String(r.username||''), fullName:String(r.fullName||''), passwordHash:String(r.passwordHash||''), createdAt:Number(r.createdAt||0) }));
+}
+async function saveIssuers(){
+  const rows = ISSUERS.map(u => ({ id:u.id, username:u.username, fullName:u.fullName, passwordHash:u.passwordHash, createdAt:u.createdAt }));
+  return saveTable('TaiKhoan', rows);
+}
+
+async function loadStockIns(){
+  const rows = await loadTable('NhapKho');
+  const map = {};
+  rows.forEach(r => {
+    const id = String(r.id);
+    if(!map[id]) map[id] = { id, code:String(r.code||''), date:String(r.date||''), supplier:String(r.supplier||''), importer:String(r.importer||''), note:String(r.note||''), createdAt:Number(r.createdAt||0), items:[] };
+    if(r.itemId) map[id].items.push({ itemId:String(r.itemId), code:String(r.itemCode||''), name:String(r.itemName||''), unit:String(r.itemUnit||''), qty:Number(r.qty||0) });
+  });
+  return Object.values(map);
+}
+async function saveStockIns(){
+  const rows = [];
+  STOCKINS.forEach(rec => rec.items.forEach(it => rows.push({
+    id: rec.id, code: rec.code, date: rec.date, supplier: rec.supplier||'', importer: rec.importer||'', note: rec.note||'', createdAt: rec.createdAt,
+    itemId: it.itemId, itemCode: it.code, itemName: it.name, itemUnit: it.unit, qty: it.qty
+  })));
+  return saveTable('NhapKho', rows);
+}
+
+async function loadVouchers(){
+  const rows = await loadTable('CapPhat');
+  const map = {};
+  rows.forEach(r => {
+    const id = String(r.id);
+    if(!map[id]) map[id] = {
+      id, code:String(r.code||''), date:String(r.date||''), department:String(r.department||''),
+      receiverName:String(r.receiverName||''), receiverSignature:r.receiverSignature||null,
+      giverName:r.giverName||null, giverUsername:r.giverUsername||null, giverSignature:r.giverSignature||null,
+      status:String(r.status||'pending'), createdAt:Number(r.createdAt||0), confirmedDate:r.confirmedDate||null,
+      rejectReason:r.rejectReason||null, rejectedBy:r.rejectedBy||null, rejectedDate:r.rejectedDate||null, items:[]
+    };
+    if(r.itemId) map[id].items.push({ itemId:String(r.itemId), code:String(r.itemCode||''), name:String(r.itemName||''), unit:String(r.itemUnit||''), qty:Number(r.qty||0) });
+  });
+  return Object.values(map);
+}
+async function saveVouchers(){
+  const rows = [];
+  VOUCHERS.forEach(v => v.items.forEach(it => rows.push({
+    id: v.id, code: v.code, date: v.date, department: v.department,
+    receiverName: v.receiverName, receiverSignature: v.receiverSignature||'',
+    giverName: v.giverName||'', giverUsername: v.giverUsername||'', giverSignature: v.giverSignature||'',
+    status: v.status, createdAt: v.createdAt, confirmedDate: v.confirmedDate||'',
+    rejectReason: v.rejectReason||'', rejectedBy: v.rejectedBy||'', rejectedDate: v.rejectedDate||'',
+    itemId: it.itemId, itemCode: it.code, itemName: it.name, itemUnit: it.unit, qty: it.qty
+  })));
+  return saveTable('CapPhat', rows);
+}
+
+async function loadProposals(){
+  const rows = await loadTable('DeXuat');
+  const map = {};
+  rows.forEach(r => {
+    const id = String(r.id);
+    if(!map[id]) map[id] = {
+      id, code:String(r.code||''), date:String(r.date||''), proposerName:String(r.proposerName||''),
+      status:String(r.status||'pending'), reviewedBy:r.reviewedBy||null, reviewedDate:r.reviewedDate||null,
+      rejectReason:r.rejectReason||null, createdAt:Number(r.createdAt||0), items:[]
+    };
+    if(r.itemName) map[id].items.push({ name:String(r.itemName||''), unit:String(r.itemUnit||''), qty:Number(r.qty||0) });
+  });
+  return Object.values(map);
+}
+async function saveProposals(){
+  const rows = [];
+  PROPOSALS.forEach(p => p.items.forEach(it => rows.push({
+    id: p.id, code: p.code, date: p.date, proposerName: p.proposerName,
+    status: p.status, reviewedBy: p.reviewedBy||'', reviewedDate: p.reviewedDate||'', rejectReason: p.rejectReason||'',
+    createdAt: p.createdAt, itemName: it.name, itemUnit: it.unit, qty: it.qty
+  })));
+  return saveTable('DeXuat', rows);
+}
+
+let ITEMS = [], VOUCHERS = [], STOCKINS = [], ISSUERS = [], PROPOSALS = [];
+let currentIssuer = null; // {id, username, fullName} — phiên chỉ tồn tại trong bộ nhớ, mất khi tải lại trang
+
+async function sha256Hex(str){
+  const enc = new TextEncoder().encode(str);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ================= Utilities ================= */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(iso){ if(!iso) return ''; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg, isErr){
+  const t = document.getElementById('toast'); if(!t) return;
+  const d = document.createElement('div');
+  d.className = 'toast-msg' + (isErr ? ' err' : '');
+  d.textContent = msg;
+  t.appendChild(d);
+  setTimeout(()=>{ d.remove(); }, 2600);
+}
+function genVoucherCode(){
+  const today = todayISO().replace(/-/g,'');
+  const n = VOUCHERS.filter(v => v.code.includes(today)).length + 1;
+  return `PX-${today}-${String(n).padStart(3,'0')}`;
+}
+function genStockInCode(){
+  const today = todayISO().replace(/-/g,'');
+  const n = STOCKINS.filter(v => v.code.includes(today)).length + 1;
+  return `PN-${today}-${String(n).padStart(3,'0')}`;
+}
+function genProposalCode(){
+  const today = todayISO().replace(/-/g,'');
+  const n = PROPOSALS.filter(v => v.code.includes(today)).length + 1;
+  return `DX-${today}-${String(n).padStart(3,'0')}`;
+}
+function genItemCode(){
+  let maxNum = 0;
+  ITEMS.forEach(it => { const m = /(\d+)$/.exec(it.code || ''); if(m) maxNum = Math.max(maxNum, parseInt(m[1], 10)); });
+  return 'VT-' + String(maxNum + 1).padStart(4, '0');
+}
+function statusLabel(s){
+  return s==='pending' ? 'Chờ duyệt' : (s==='confirmed' || s==='approved') ? (s==='approved' ? 'Thành công' : 'Đã cấp phát') : 'Từ chối';
+}
+
+/* ================= Signature pad ================= */
+function makeSignaturePad(container){
+  container.innerHTML = `<div class="sig-wrap"><canvas></canvas><div class="sig-placeholder">Ký vào đây (chuột hoặc cảm ứng)</div></div>
+    <div class="sig-actions"><button type="button" class="btn btn-sm clear-sig">Xóa chữ ký</button></div>`;
+  const wrap = container.querySelector('.sig-wrap');
+  const canvas = container.querySelector('canvas');
+  const placeholder = container.querySelector('.sig-placeholder');
+  const ctx = canvas.getContext('2d');
+  let drawn = false, drawing = false, last = null;
+
+  function resize(){
+    const rect = wrap.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    const prev = drawn ? canvas.toDataURL() : null;
+    canvas.width = rect.width * ratio;
+    canvas.height = 220 * ratio;
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.strokeStyle = '#1C2321';
+    if(prev){ const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, rect.width, 220); img.src = prev; }
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function pos(e){ const rect = canvas.getBoundingClientRect(); const p = e.touches ? e.touches[0] : e; return { x: p.clientX - rect.left, y: p.clientY - rect.top }; }
+  function start(e){ e.preventDefault(); drawing = true; last = pos(e); }
+  function move(e){
+    if(!drawing) return; e.preventDefault();
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    last = p;
+    if(!drawn){ drawn = true; placeholder.style.display = 'none'; }
+  }
+  function end(){ drawing = false; }
+
+  canvas.addEventListener('pointerdown', start);
+  canvas.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+
+  container.querySelector('.clear-sig').addEventListener('click', () => {
+    ctx.clearRect(0,0,canvas.width,canvas.height); drawn = false; placeholder.style.display = 'flex';
+  });
+
+  return { isEmpty: () => !drawn, toDataURL: () => drawn ? canvas.toDataURL('image/png') : null };
+}
+
+/* ================= App state ================= */
+let appMode = 'landing'; // landing | receiver | issuer-login | issuer
+let receiverView = 'menu'; // menu | voucherForm | proposalForm | lookup
+let issuerTab = 'capphat'; // capphat | dexuat | nhapkho | theodoi | taikhoan
+
+let capphatSubView = 'list'; let capphatFilter = 'all'; let selectedVoucherId = null;
+let dexuatSubView = 'list'; let dexuatFilter = 'all'; let selectedProposalId = null;
+
+let formRows = [];       // dòng vật phẩm trong phiếu cấp phát
+let proposalRows = [];   // dòng vật phẩm trong đề xuất
+let niRows = [];         // dòng vật phẩm trong nhập kho
+let sigReceiver = null, sigGiver = null;
+let lookupName = '';
+let theodoiQuery = { search:'', category:'all', status:'all', sort:'name' };
+
+/* ================= Root render ================= */
+function render(){
+  const app = document.getElementById('app');
+  if(appMode === 'landing') app.innerHTML = renderLanding();
+  else if(appMode === 'issuer-login') app.innerHTML = renderIssuerLoginPage();
+  else if(appMode === 'receiver') app.innerHTML = renderReceiver();
+  else app.innerHTML = renderIssuer();
+  renderHeader();
+  bindEvents();
+}
+
+function renderHeader(){
+  const side = document.getElementById('header-side');
+  const tabsEl = document.getElementById('header-tabs');
+  if(appMode === 'receiver'){
+    side.innerHTML = `<div class="side-info">📥 <b>Người nhận</b> <button class="linklike" id="btn-role-switch">Đổi vai trò</button></div>`;
+    tabsEl.innerHTML = '';
+  } else if(appMode === 'issuer' && currentIssuer){
+    side.innerHTML = `<div class="side-info">🔐 <b>${esc(currentIssuer.fullName)}</b> <button class="linklike" id="btn-issuer-logout">Đăng xuất</button></div>`;
+    tabsEl.innerHTML = `
+      <button class="tab ${issuerTab==='capphat'?'active':''}" data-itab="capphat">Cấp phát</button>
+      <button class="tab ${issuerTab==='dexuat'?'active':''}" data-itab="dexuat">Đề xuất</button>
+      <button class="tab ${issuerTab==='nhapkho'?'active':''}" data-itab="nhapkho">Nhập kho</button>
+      <button class="tab ${issuerTab==='theodoi'?'active':''}" data-itab="theodoi">Theo dõi tồn kho</button>
+      <button class="tab ${issuerTab==='taikhoan'?'active':''}" data-itab="taikhoan">Tài khoản</button>`;
+  } else {
+    side.innerHTML = '';
+    tabsEl.innerHTML = '';
+  }
+  const roleSwitch = document.getElementById('btn-role-switch');
+  if(roleSwitch) roleSwitch.onclick = () => { appMode = 'landing'; render(); };
+  const logoutBtn = document.getElementById('btn-issuer-logout');
+  if(logoutBtn) logoutBtn.onclick = () => { currentIssuer = null; appMode = 'landing'; toast('Đã đăng xuất.'); render(); };
+  document.querySelectorAll('[data-itab]').forEach(t => t.onclick = () => { issuerTab = t.dataset.itab; render(); });
+}
+
+/* ================= LANDING ================= */
+function renderLanding(){
+  return `
+  <div class="landing-wrap">
+    <h2 class="landing-title">Bạn đang truy cập với vai trò nào?</h2>
+    <div class="landing-sub">Chọn vai trò để tiếp tục</div>
+    <div class="role-grid">
+      <div class="role-card" id="card-receiver">
+        <div class="role-icon">📥</div>
+        <h3>Người nhận</h3>
+        <p>Tạo phiếu xin cấp phát vật phẩm có sẵn trong kho, gửi đề xuất nhập vật phẩm mới, hoặc tra cứu phiếu đã tạo. Không cần đăng nhập.</p>
+        <div class="role-badge">Vào ngay →</div>
+      </div>
+      <div class="role-card" id="card-issuer">
+        <div class="role-icon">🔐</div>
+        <h3>Người cấp phát</h3>
+        <p>Duyệt phiếu cấp phát &amp; đề xuất, quản lý nhập kho, theo dõi tồn kho toàn bộ. Yêu cầu đăng nhập tài khoản.</p>
+        <div class="role-badge">Đăng nhập →</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ================= ISSUER LOGIN (đứng riêng ở landing) ================= */
+function issuerAuthCardHtml(){
+  if(ISSUERS.length === 0){
+    return `
+    <h3>Thiết lập tài khoản cấp phát đầu tiên</h3>
+    <div class="muted" style="margin-bottom:14px;">Kho chưa có tài khoản nào. Tạo tài khoản quản trị đầu tiên bên dưới.</div>
+    <div class="field"><label>Họ tên *</label><input type="text" id="au-setup-fullname" placeholder="Nguyễn Văn A"></div>
+    <div class="grid2">
+      <div class="field"><label>Tên đăng nhập *</label><input type="text" id="au-setup-username" placeholder="vd: vana"></div>
+      <div class="field"><label>Mật khẩu *</label><input type="text" id="au-setup-password" placeholder="Tối thiểu 4 ký tự"></div>
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-issuer-setup-submit">Tạo tài khoản &amp; đăng nhập</button>`;
+  }
+  return `
+  <h3>Đăng nhập người cấp phát</h3>
+  <div class="muted" style="margin-bottom:14px;">Chỉ người có tài khoản mới được kiểm tra và ký xác nhận cấp phát.</div>
+  <div class="field"><label>Tên đăng nhập</label><input type="text" id="au-login-username" placeholder="Tên đăng nhập"></div>
+  <div class="field"><label>Mật khẩu</label><input type="text" id="au-login-password" placeholder="Mật khẩu"></div>
+  <button class="btn btn-primary btn-block" id="btn-issuer-login-submit">Đăng nhập</button>
+  <div class="muted" style="margin-top:10px;">Chưa có tài khoản? Liên hệ người quản lý để được cấp.</div>`;
+}
+function renderIssuerLoginPage(){
+  return `
+  <button class="backlink" id="btn-back-landing">← Quay lại chọn vai trò</button>
+  <div class="card">${issuerAuthCardHtml()}</div>`;
+}
+
+/* ================= RECEIVER (Người nhận) ================= */
+function renderReceiver(){
+  if(receiverView === 'voucherForm') return renderVoucherForm();
+  if(receiverView === 'proposalForm') return renderProposalForm();
+  if(receiverView === 'lookup') return renderLookup();
+  return renderReceiverMenu();
+}
+
+function renderReceiverMenu(){
+  return `
+  <button class="backlink" id="btn-back-landing">← Quay lại chọn vai trò</button>
+  <div class="menu-grid">
+    <div class="menu-card" id="btn-go-voucher">
+      <div class="menu-icon">📝</div>
+      <div class="menu-text"><h4>Tạo phiếu cấp phát</h4><p>Xin cấp vật phẩm có sẵn trong kho, ký xác nhận.</p></div>
+    </div>
+    <div class="menu-card" id="btn-go-proposal">
+      <div class="menu-icon">➕</div>
+      <div class="menu-text"><h4>Tạo đề xuất</h4><p>Đề xuất nhập vật phẩm mới (kể cả chưa có trong kho).</p></div>
+    </div>
+    <div class="menu-card" id="btn-go-lookup">
+      <div class="menu-icon">🔍</div>
+      <div class="menu-text"><h4>Tra cứu phiếu của tôi</h4><p>Xem lại trạng thái phiếu cấp phát &amp; đề xuất đã gửi.</p></div>
+    </div>
+  </div>`;
+}
+
+/* ---- Tạo phiếu cấp phát ---- */
+function renderVoucherForm(){
+  if(formRows.length === 0) formRows = [{rowId: uid(), itemId:'', qty:''}];
+  const itemOptions = ITEMS.slice().sort((a,b)=>a.name.localeCompare(b.name,'vi'));
+  if(itemOptions.length === 0){
+    return `
+    <button class="backlink" id="btn-back-menu">← Quay lại</button>
+    <div class="card"><div class="empty"><div class="big">📭</div>Kho chưa có vật phẩm nào.<br>Vui lòng liên hệ người quản lý kho để được nhập hàng trước, hoặc gửi <b>Đề xuất</b> để yêu cầu nhập vật phẩm mới.</div></div>`;
+  }
+  return `
+  <button class="backlink" id="btn-back-menu">← Quay lại</button>
+  <div class="card">
+    <h3>Tạo phiếu cấp phát</h3>
+    <div class="muted" style="margin-bottom:16px;">Điền thông tin người nhận và ký xác nhận. Phiếu sẽ chuyển tới người cấp phát để duyệt.</div>
+    <div class="grid2">
+      <div class="field"><label>Họ tên người nhận *</label><input type="text" id="f-receiver" placeholder="Nguyễn Văn A"></div>
+      <div class="field"><label>Bộ phận / Phòng ban *</label><input type="text" id="f-department" placeholder="Phòng Kế toán"></div>
+    </div>
+    <div class="field"><label>Ngày lập phiếu</label><input type="date" id="f-date" value="${todayISO()}"></div>
+
+    <label style="margin-top:6px;">Danh sách vật phẩm cần cấp *</label>
+    <div id="item-rows">${formRows.map(voucherRowHtml).join('')}</div>
+    <button type="button" class="btn btn-sm" id="btn-add-row">➕ Thêm vật phẩm khác vào phiếu</button>
+
+    <div class="field" style="margin-top:18px;"><label>Chữ ký người nhận *</label><div id="sig-receiver-container"></div></div>
+    <button class="btn btn-primary btn-block" id="btn-submit-voucher" style="margin-top:6px;">Gửi phiếu chờ duyệt</button>
+  </div>`;
+}
+function voucherRowHtml(row){
+  const opts = ITEMS.slice().sort((a,b)=>a.name.localeCompare(b.name,'vi'))
+    .map(it => `<option value="${it.id}" ${row.itemId===it.id?'selected':''}>[${esc(it.code)}] ${esc(it.name)}</option>`).join('');
+  const item = ITEMS.find(i => i.id === row.itemId);
+  return `
+  <div class="item-row" data-row="${row.rowId}">
+    <div><select class="row-item"><option value="">— Chọn vật phẩm —</option>${opts}</select>
+    ${item ? `<div class="stockhint">Mã: ${esc(item.code)} · Đơn vị: ${esc(item.unit)} · Tồn kho: ${item.stock}</div>` : ''}</div>
+    <div><input type="number" min="1" class="row-qty" placeholder="SL" value="${esc(row.qty)}"></div>
+    <div style="align-self:center;font-size:13px;color:var(--sage);">${item ? esc(item.unit) : ''}</div>
+    <button type="button" class="rm-row" title="Xóa dòng">✕</button>
+  </div>`;
+}
+
+/* ---- Tạo đề xuất ---- */
+function renderProposalForm(){
+  if(proposalRows.length === 0) proposalRows = [{rowId: uid(), name:'', unit:'', qty:''}];
+  return `
+  <button class="backlink" id="btn-back-menu">← Quay lại</button>
+  <div class="card">
+    <h3>Tạo đề xuất nhập vật phẩm</h3>
+    <div class="muted" style="margin-bottom:16px;">Dùng khi cần đề xuất vật phẩm chưa có trong kho (hoặc cần nhập thêm). Người cấp phát sẽ xem xét và duyệt.</div>
+    <div class="field"><label>Họ tên người đề xuất *</label><input type="text" id="p-proposer" placeholder="Nguyễn Văn A"></div>
+    <div class="field"><label>Ngày đề xuất</label><input type="date" id="p-date" value="${todayISO()}"></div>
+
+    <label style="margin-top:6px;">Danh sách vật phẩm đề xuất *</label>
+    <div id="proposal-rows">${proposalRows.map(proposalRowHtml).join('')}</div>
+    <button type="button" class="btn btn-sm" id="btn-add-prow">➕ Thêm vật phẩm khác</button>
+
+    <button class="btn btn-primary btn-block" id="btn-submit-proposal" style="margin-top:16px;">Gửi đề xuất</button>
+  </div>`;
+}
+function proposalRowHtml(row){
+  return `
+  <div class="prow" data-prow="${row.rowId}">
+    <div><input type="text" class="prow-name" placeholder="Tên vật phẩm" value="${esc(row.name)}"></div>
+    <div><input type="text" class="prow-unit" list="dl-units" placeholder="Đơn vị tính" value="${esc(row.unit)}"></div>
+    <div><input type="number" min="1" class="prow-qty" placeholder="SL" value="${esc(row.qty)}"></div>
+    <button type="button" class="rm-prow" title="Xóa dòng">✕</button>
+  </div>`;
+}
+
+/* ---- Tra cứu phiếu của tôi ---- */
+function renderLookup(){
+  const q = lookupName.trim().toLowerCase();
+  let results = [];
+  if(q){
+    VOUCHERS.filter(v => v.receiverName.toLowerCase().includes(q)).forEach(v => results.push({type:'voucher', data:v}));
+    PROPOSALS.filter(p => p.proposerName.toLowerCase().includes(q)).forEach(p => results.push({type:'proposal', data:p}));
+    results.sort((a,b) => b.data.createdAt - a.data.createdAt);
+  }
+  return `
+  <button class="backlink" id="btn-back-menu">← Quay lại</button>
+  <div class="card">
+    <h3>Tra cứu phiếu của tôi</h3>
+    <div class="muted" style="margin-bottom:14px;">Nhập đúng họ tên đã dùng lúc tạo phiếu/đề xuất để tìm lại.</div>
+    <div class="field" style="margin-bottom:0;"><label>Họ tên</label><input type="text" id="lookup-input" placeholder="Nhập họ tên..." value="${esc(lookupName)}"></div>
+  </div>
+  ${!q ? '' : results.length===0 ? `<div class="card"><div class="empty"><div class="big">🔍</div>Không tìm thấy phiếu nào với tên này.</div></div>` :
+    results.map(r => r.type==='voucher' ? lookupVoucherCard(r.data) : lookupProposalCard(r.data)).join('')}
+  `;
+}
+function lookupVoucherCard(v){
+  const itemsRows = v.items.map(it => `<tr><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td>${it.qty}</td></tr>`).join('');
+  return `
+  <div class="lookup-card">
+    <div class="lookup-head">
+      <div><span class="badge badge-type-voucher">Cấp phát</span> <b>${esc(v.code)}</b></div>
+      <span class="badge badge-${v.status}">${statusLabel(v.status)}</span>
+    </div>
+    <div class="muted" style="margin-bottom:8px;">Ngày ${fmtDate(v.date)} · Bộ phận: ${esc(v.department)}</div>
+    <table class="items-table"><thead><tr><th>Vật phẩm</th><th>ĐVT</th><th>SL</th></tr></thead><tbody>${itemsRows}</tbody></table>
+    ${v.status==='rejected' && v.rejectReason ? `<div class="muted">Lý do từ chối: ${esc(v.rejectReason)} (${fmtDate(v.rejectedDate)})</div>` : ''}
+  </div>`;
+}
+function lookupProposalCard(p){
+  const itemsRows = p.items.map(it => `<tr><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td>${it.qty}</td></tr>`).join('');
+  return `
+  <div class="lookup-card">
+    <div class="lookup-head">
+      <div><span class="badge badge-type-proposal">Đề xuất</span> <b>${esc(p.code)}</b></div>
+      <span class="badge badge-${p.status}">${statusLabel(p.status)}</span>
+    </div>
+    <div class="muted" style="margin-bottom:8px;">Ngày ${fmtDate(p.date)}</div>
+    <table class="items-table"><thead><tr><th>Vật phẩm đề xuất</th><th>ĐVT</th><th>SL</th></tr></thead><tbody>${itemsRows}</tbody></table>
+    ${p.status==='rejected' && p.rejectReason ? `<div class="muted">Lý do từ chối: ${esc(p.rejectReason)}</div>` : ''}
+  </div>`;
+}
+
+/* ================= ISSUER (Người cấp phát) ================= */
+function renderIssuer(){
+  if(issuerTab === 'capphat') return renderIssuerCapPhat();
+  if(issuerTab === 'dexuat') return renderIssuerDeXuat();
+  if(issuerTab === 'nhapkho') return renderNhapKho();
+  if(issuerTab === 'theodoi') return renderTheoDoi();
+  return renderIssuerAdmin();
+}
+
+/* ---- Cấp phát (issuer) ---- */
+function renderIssuerCapPhat(){
+  if(capphatSubView === 'detail') return renderVoucherDetail();
+  const filtered = VOUCHERS.filter(v => capphatFilter === 'all' ? true : v.status === capphatFilter).sort((a,b) => b.createdAt - a.createdAt);
+  const counts = { all: VOUCHERS.length, pending: VOUCHERS.filter(v=>v.status==='pending').length, confirmed: VOUCHERS.filter(v=>v.status==='confirmed').length, rejected: VOUCHERS.filter(v=>v.status==='rejected').length };
+  return `
+  <div class="row"><div><h3>Phiếu cấp phát</h3><div class="muted">Kiểm tra &amp; ký xác nhận các phiếu do người nhận gửi lên</div></div></div>
+  <div class="filters">
+    <button class="chip ${capphatFilter==='all'?'active':''}" data-filter="all">Tất cả (${counts.all})</button>
+    <button class="chip ${capphatFilter==='pending'?'active':''}" data-filter="pending">Chờ duyệt (${counts.pending})</button>
+    <button class="chip ${capphatFilter==='confirmed'?'active':''}" data-filter="confirmed">Đã cấp (${counts.confirmed})</button>
+    <button class="chip ${capphatFilter==='rejected'?'active':''}" data-filter="rejected">Từ chối (${counts.rejected})</button>
+  </div>
+  <div class="card">
+    ${filtered.length === 0 ? `<div class="empty"><div class="big">🗂️</div>Chưa có phiếu nào trong mục này.</div>` :
+      filtered.map(v => `
+        <div class="vlist-item" data-open-voucher="${v.id}">
+          <div><div class="vcode">${esc(v.code)}</div><div class="vsub">${esc(v.receiverName)} · ${esc(v.department)} · ${fmtDate(v.date)}</div></div>
+          <span class="badge badge-${v.status}">${statusLabel(v.status)}</span>
+        </div>`).join('')}
+  </div>`;
+}
+function renderVoucherDetail(){
+  const v = VOUCHERS.find(x => x.id === selectedVoucherId);
+  if(!v) { capphatSubView = 'list'; return renderIssuerCapPhat(); }
+  const itemsRows = v.items.map((it,i) => `<tr><td>${i+1}</td><td>${esc(it.code||'—')}</td><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td>${it.qty}</td></tr>`).join('');
+
+  let actionBlock = '';
+  if(v.status === 'pending'){
+    actionBlock = `
+    <div class="card">
+      <h3>Xác nhận cấp phát</h3>
+      <div class="muted" style="margin-bottom:14px;">Kiểm tra nội dung phiếu, sau đó ký xác nhận để hoàn tất cấp phát (số lượng sẽ được trừ khỏi tồn kho). Người cấp: <b>${esc(currentIssuer.fullName)}</b></div>
+      <div class="field"><label>Chữ ký người cấp phát *</label><div id="sig-giver-container"></div></div>
+      <div class="row" style="margin-top:6px;">
+        <button class="btn btn-red" id="btn-reject">Từ chối phiếu</button>
+        <button class="btn btn-green" id="btn-confirm">✓ Xác nhận cấp phát</button>
+      </div>
+    </div>`;
+  } else if(v.status === 'rejected'){
+    actionBlock = `<div class="card"><h3>Đã từ chối</h3>${v.rejectReason ? `<div class="muted">Lý do: ${esc(v.rejectReason)}</div>` : '<div class="muted">Không có ghi chú lý do.</div>'}<div class="muted" style="margin-top:6px;">Người từ chối: ${esc(v.rejectedBy||'')} · Ngày: ${fmtDate(v.rejectedDate)}</div></div>`;
+  } else {
+    actionBlock = `
+    <div class="card">
+      <div class="row" style="margin-bottom:0;">
+        <div><h3>Phiếu đã hoàn tất</h3><div class="muted">Cấp ngày ${fmtDate(v.confirmedDate)}</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" id="btn-print">🖨️ Xuất PDF / In</button>
+          <button class="btn" disabled title="Sẽ bổ sung khi có cấu hình email">✉️ Gửi email</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <button class="backlink" id="btn-back-list">← Quay lại danh sách</button>
+  <div class="card">
+    <div class="row"><div><h3>${esc(v.code)}</h3><div class="muted">Lập ngày ${fmtDate(v.date)}</div></div><span class="badge badge-${v.status}">${statusLabel(v.status)}</span></div>
+    <div class="detail-grid">
+      <div class="kv"><div class="k">Người nhận</div><div class="v">${esc(v.receiverName)}</div></div>
+      <div class="kv"><div class="k">Bộ phận</div><div class="v">${esc(v.department)}</div></div>
+    </div>
+    <table class="items-table"><thead><tr><th>#</th><th>Mã VP</th><th>Vật phẩm</th><th>ĐVT</th><th>Số lượng</th></tr></thead><tbody>${itemsRows}</tbody></table>
+    <div class="detail-grid">
+      <div>
+        <div class="k" style="font-size:12px;color:var(--sage);font-weight:600;text-transform:uppercase;margin-bottom:6px;">Chữ ký người nhận</div>
+        <div class="sig-preview ${v.receiverSignature?'':'empty'}">${v.receiverSignature ? `<img src="${v.receiverSignature}">` : 'Chưa có'}</div>
+        <div class="muted" style="margin-top:4px;">${esc(v.receiverName)}</div>
+      </div>
+      <div>
+        <div class="k" style="font-size:12px;color:var(--sage);font-weight:600;text-transform:uppercase;margin-bottom:6px;">Chữ ký người cấp phát</div>
+        <div class="sig-preview ${v.giverSignature?'':'empty'}">${v.giverSignature ? `<img src="${v.giverSignature}">` : 'Chưa có'}</div>
+        <div class="muted" style="margin-top:4px;">${esc(v.giverName||'')}</div>
+      </div>
+    </div>
+  </div>
+  ${actionBlock}`;
+}
+
+/* ---- Đề xuất (issuer) ---- */
+function renderIssuerDeXuat(){
+  if(dexuatSubView === 'detail') return renderProposalDetail();
+  const filtered = PROPOSALS.filter(p => dexuatFilter === 'all' ? true : p.status === dexuatFilter).sort((a,b) => b.createdAt - a.createdAt);
+  const counts = { all: PROPOSALS.length, pending: PROPOSALS.filter(p=>p.status==='pending').length, approved: PROPOSALS.filter(p=>p.status==='approved').length, rejected: PROPOSALS.filter(p=>p.status==='rejected').length };
+  return `
+  <div class="row"><div><h3>Đề xuất nhập vật phẩm</h3><div class="muted">Xem xét các đề xuất do người nhận gửi lên</div></div></div>
+  <div class="filters">
+    <button class="chip ${dexuatFilter==='all'?'active':''}" data-dfilter="all">Tất cả (${counts.all})</button>
+    <button class="chip ${dexuatFilter==='pending'?'active':''}" data-dfilter="pending">Chờ duyệt (${counts.pending})</button>
+    <button class="chip ${dexuatFilter==='approved'?'active':''}" data-dfilter="approved">Thành công (${counts.approved})</button>
+    <button class="chip ${dexuatFilter==='rejected'?'active':''}" data-dfilter="rejected">Từ chối (${counts.rejected})</button>
+  </div>
+  <div class="card">
+    ${filtered.length === 0 ? `<div class="empty"><div class="big">🗂️</div>Chưa có đề xuất nào trong mục này.</div>` :
+      filtered.map(p => `
+        <div class="vlist-item" data-open-proposal="${p.id}">
+          <div><div class="vcode">${esc(p.code)}</div><div class="vsub">${esc(p.proposerName)} · ${fmtDate(p.date)} · ${p.items.length} vật phẩm</div></div>
+          <span class="badge badge-${p.status}">${statusLabel(p.status)}</span>
+        </div>`).join('')}
+  </div>`;
+}
+function renderProposalDetail(){
+  const p = PROPOSALS.find(x => x.id === selectedProposalId);
+  if(!p){ dexuatSubView = 'list'; return renderIssuerDeXuat(); }
+  const itemsRows = p.items.map((it,i) => `<tr><td>${i+1}</td><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td>${it.qty}</td></tr>`).join('');
+  let actionBlock = '';
+  if(p.status === 'pending'){
+    actionBlock = `
+    <div class="card">
+      <h3>Xem xét đề xuất</h3>
+      <div class="muted" style="margin-bottom:14px;">Duyệt = đồng ý về chủ trương nhập các vật phẩm này (tự thêm vào danh mục kho với tồn kho = 0). Khi hàng về thực tế, vẫn cần vào tab Nhập kho ghi nhận số lượng.</div>
+      <div class="row">
+        <button class="btn btn-red" id="btn-reject-proposal">Từ chối</button>
+        <button class="btn btn-green" id="btn-approve-proposal">✓ Duyệt đề xuất</button>
+      </div>
+    </div>`;
+  } else if(p.status === 'rejected'){
+    actionBlock = `<div class="card"><h3>Đã từ chối</h3>${p.rejectReason ? `<div class="muted">Lý do: ${esc(p.rejectReason)}</div>` : '<div class="muted">Không có ghi chú lý do.</div>'}<div class="muted" style="margin-top:6px;">Người duyệt: ${esc(p.reviewedBy||'')} · ${fmtDate(p.reviewedDate)}</div></div>`;
+  } else {
+    actionBlock = `<div class="card"><h3>Đã duyệt thành công</h3><div class="muted">Người duyệt: ${esc(p.reviewedBy||'')} · Ngày duyệt: ${fmtDate(p.reviewedDate)}</div></div>`;
+  }
+  return `
+  <button class="backlink" id="btn-back-dexuat-list">← Quay lại danh sách</button>
+  <div class="card">
+    <div class="row"><div><h3>${esc(p.code)}</h3><div class="muted">Ngày đề xuất ${fmtDate(p.date)}</div></div><span class="badge badge-${p.status}">${statusLabel(p.status)}</span></div>
+    <div class="kv" style="margin-bottom:14px;"><div class="k">Người đề xuất</div><div class="v">${esc(p.proposerName)}</div></div>
+    <table class="items-table"><thead><tr><th>#</th><th>Tên vật phẩm đề xuất</th><th>ĐVT</th><th>Số lượng</th></tr></thead><tbody>${itemsRows}</tbody></table>
+  </div>
+  ${actionBlock}`;
+}
+
+/* ---- Nhập kho (issuer) ---- */
+function niItemOptionsHtml(selectedId){
+  return ITEMS.slice().sort((a,b)=>a.name.localeCompare(b.name,'vi'))
+    .map(it => `<option value="${it.id}" ${selectedId===it.id?'selected':''}>[${esc(it.code)}] ${esc(it.name)} (tồn: ${it.stock} ${esc(it.unit)})</option>`).join('');
+}
+function niRowHtml(row){
+  const isNew = row.itemId === '__new__';
+  const item = ITEMS.find(i => i.id === row.itemId);
+  return `
+  <div class="card" style="background:var(--paper);padding:14px;margin-bottom:10px;" data-nirow="${row.rowId}">
+    <div class="item-row" style="grid-template-columns:1fr 90px 34px;">
+      <div><select class="ni-row-item">
+        <option value="">— Chọn vật phẩm có sẵn —</option>
+        ${niItemOptionsHtml(row.itemId)}
+        <option value="__new__" ${isNew?'selected':''}>＋ Thêm vật phẩm mới…</option>
+      </select>${item ? `<div class="stockhint">Mã: ${esc(item.code)} · Tồn hiện tại: ${item.stock} ${esc(item.unit)}</div>` : ''}</div>
+      <div><input type="number" min="1" class="ni-row-qty" placeholder="SL nhập" value="${esc(row.qty)}"></div>
+      <button type="button" class="rm-nirow" title="Xóa dòng">✕</button>
+    </div>
+    ${isNew ? `
+    <div class="grid2" style="margin-top:10px;">
+      <div class="field"><label>Tên vật phẩm mới *</label><input type="text" class="ni-row-newname" placeholder="VD: Bút bi Thiên Long" value="${esc(row.newName||'')}"></div>
+      <div class="field"><label>Đơn vị tính *</label><input type="text" class="ni-row-newunit" list="dl-units" placeholder="Cái / Hộp / Cây..." value="${esc(row.newUnit||'')}"></div>
+    </div>
+    <div class="field" style="margin-bottom:0;"><label>Danh mục</label><input type="text" class="ni-row-newcat" list="dl-categories" placeholder="Văn phòng phẩm..." value="${esc(row.newCategory||'')}"></div>
+    <div class="muted" style="margin-top:6px;">Mã vật phẩm sẽ được hệ thống tự cấp, không trùng.</div>` : ''}
+  </div>`;
+}
+function renderNhapKho(){
+  if(niRows.length === 0) niRows = [{rowId: uid(), itemId:'', qty:'', newName:'', newUnit:'', newCategory:''}];
+  const history = STOCKINS.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,20);
+  return `
+  <div class="card">
+    <h3>Nhập kho</h3>
+    <div class="muted" style="margin-bottom:16px;">Có thể nhập nhiều vật phẩm trong cùng 1 phiếu — số lượng sẽ tự động cộng vào tồn kho của từng vật phẩm.</div>
+    <label>Danh sách vật phẩm nhập kho *</label>
+    <div id="ni-rows">${niRows.map(niRowHtml).join('')}</div>
+    <button type="button" class="btn btn-sm" id="btn-ni-add-row">➕ Thêm vật phẩm khác vào phiếu</button>
+    <div class="grid2" style="margin-top:16px;">
+      <div class="field"><label>Ngày nhập</label><input type="date" id="ni-date" value="${todayISO()}"></div>
+      <div class="field"><label>Nhà cung cấp</label><input type="text" id="ni-supplier" placeholder="Tên nhà cung cấp (không bắt buộc)"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Người nhập</label><input type="text" id="ni-importer" placeholder="Họ tên người nhập kho" value="${esc(currentIssuer ? currentIssuer.fullName : '')}"></div>
+      <div class="field"><label>Ghi chú</label><input type="text" id="ni-note" placeholder="Ghi chú thêm (không bắt buộc)"></div>
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-submit-nhapkho">+ Ghi nhận phiếu nhập kho</button>
+  </div>
+  <div class="card">
+    <h3>Lịch sử nhập kho gần đây</h3>
+    ${history.length===0 ? `<div class="empty">Chưa có lượt nhập kho nào.</div>` : `
+    <div class="tablewrap" style="margin-top:12px;">
+      <table class="inv-table">
+        <thead><tr><th>Mã phiếu</th><th>Ngày</th><th>Vật phẩm đã nhập</th><th>Nhà CC</th><th>Người nhập</th></tr></thead>
+        <tbody>${history.map(h => `<tr>
+            <td>${esc(h.code)}</td><td>${fmtDate(h.date)}</td>
+            <td>${h.items.map(it => `[${esc(it.code)}] ${esc(it.name)} <b>+${it.qty}</b> ${esc(it.unit)}`).join('<br>')}</td>
+            <td>${esc(h.supplier||'—')}</td><td>${esc(h.importer||'—')}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+    </div>`}
+  </div>`;
+}
+
+/* ---- Theo dõi tồn kho (issuer) ---- */
+function renderTheoDoi(){
+  const total = ITEMS.length;
+  const outOfStock = ITEMS.filter(i => i.stock <= 0).length;
+  const categories = Array.from(new Set(ITEMS.map(i => i.category).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'vi'));
+  let list = ITEMS.filter(i => {
+    if(theodoiQuery.search){ const q = theodoiQuery.search.toLowerCase(); if(!i.name.toLowerCase().includes(q) && !(i.code||'').toLowerCase().includes(q)) return false; }
+    if(theodoiQuery.category !== 'all' && i.category !== theodoiQuery.category) return false;
+    if(theodoiQuery.status === 'in' && i.stock <= 0) return false;
+    if(theodoiQuery.status === 'out' && i.stock > 0) return false;
+    return true;
+  });
+  if(theodoiQuery.sort === 'name') list.sort((a,b)=>a.name.localeCompare(b.name,'vi'));
+  else if(theodoiQuery.sort === 'stock_asc') list.sort((a,b)=>a.stock-b.stock);
+  else if(theodoiQuery.sort === 'stock_desc') list.sort((a,b)=>b.stock-a.stock);
+
+  return `
+  <div class="stats">
+    <div class="stat"><div class="num">${total}</div><div class="lbl">Tổng mặt hàng</div></div>
+    <div class="stat warn"><div class="num">${outOfStock}</div><div class="lbl">Đang hết hàng</div></div>
+    <div class="stat"><div class="num">${total-outOfStock}</div><div class="lbl">Còn hàng</div></div>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <input type="text" id="td-search" placeholder="🔎 Tìm theo tên hoặc mã vật phẩm..." value="${esc(theodoiQuery.search)}">
+      <select id="td-category"><option value="all">Tất cả danh mục</option>${categories.map(c=>`<option value="${esc(c)}" ${theodoiQuery.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+      <select id="td-status">
+        <option value="all" ${theodoiQuery.status==='all'?'selected':''}>Tất cả trạng thái</option>
+        <option value="in" ${theodoiQuery.status==='in'?'selected':''}>Còn hàng</option>
+        <option value="out" ${theodoiQuery.status==='out'?'selected':''}>Hết hàng</option>
+      </select>
+      <select id="td-sort">
+        <option value="name" ${theodoiQuery.sort==='name'?'selected':''}>Sắp xếp: Tên A→Z</option>
+        <option value="stock_asc" ${theodoiQuery.sort==='stock_asc'?'selected':''}>Tồn kho: thấp→cao</option>
+        <option value="stock_desc" ${theodoiQuery.sort==='stock_desc'?'selected':''}>Tồn kho: cao→thấp</option>
+      </select>
+    </div>
+    ${list.length===0 ? `<div class="empty"><div class="big">🔍</div>Không tìm thấy vật phẩm phù hợp.</div>` : `
+    <div class="tablewrap">
+      <table class="inv-table">
+        <thead><tr><th>Mã VP</th><th>Tên vật phẩm</th><th>Danh mục</th><th>ĐVT</th><th>Tồn kho</th><th>Trạng thái</th></tr></thead>
+        <tbody>${list.map(i => `<tr class="${i.stock<=0?'out':''}">
+            <td>${esc(i.code)}</td><td>${esc(i.name)}</td><td>${esc(i.category||'—')}</td><td>${esc(i.unit)}</td>
+            <td class="num">${i.stock}</td>
+            <td>${i.stock>0 ? '<span class="badge badge-instock">Còn hàng</span>' : '<span class="badge badge-outstock">Hết hàng</span>'}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+    </div>`}
+  </div>`;
+}
+
+/* ---- Quản lý tài khoản (issuer) ---- */
+function renderIssuerAdmin(){
+  return `
+  <div class="card">
+    <h3>Tài khoản người cấp phát</h3>
+    <div class="muted" style="margin-bottom:10px;">Đang đăng nhập: <b>${esc(currentIssuer.fullName)}</b> (@${esc(currentIssuer.username)})</div>
+    ${ISSUERS.map(u => `
+      <div class="issuer-list-item">
+        <div><div class="issuer-name">${esc(u.fullName)}</div><div class="issuer-sub">@${esc(u.username)}</div></div>
+        <button class="btn btn-sm btn-red" data-del-issuer="${u.id}">Xóa</button>
+      </div>`).join('')}
+  </div>
+  <div class="card">
+    <h3>Thêm tài khoản mới</h3>
+    <div class="field"><label>Họ tên *</label><input type="text" id="au-new-fullname" placeholder="Trần Thị B"></div>
+    <div class="grid2">
+      <div class="field"><label>Tên đăng nhập *</label><input type="text" id="au-new-username" placeholder="vd: thib"></div>
+      <div class="field"><label>Mật khẩu *</label><input type="text" id="au-new-password" placeholder="Tối thiểu 4 ký tự"></div>
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-issuer-add-submit">+ Thêm tài khoản</button>
+  </div>`;
+}
+
+/* ================= EVENTS ================= */
+function bindEvents(){
+  const cardR = document.getElementById('card-receiver');
+  if(cardR) cardR.onclick = () => { appMode = 'receiver'; receiverView = 'menu'; render(); };
+  const cardI = document.getElementById('card-issuer');
+  if(cardI) cardI.onclick = () => {
+    if(currentIssuer){ appMode = 'issuer'; issuerTab = 'capphat'; capphatSubView='list'; }
+    else appMode = 'issuer-login';
+    render();
+  };
+  const backLanding = document.getElementById('btn-back-landing');
+  if(backLanding) backLanding.onclick = () => { appMode = 'landing'; render(); };
+  const backMenu = document.getElementById('btn-back-menu');
+  if(backMenu) backMenu.onclick = () => { receiverView = 'menu'; render(); };
+  const backList = document.getElementById('btn-back-list');
+  if(backList) backList.onclick = () => { capphatSubView = 'list'; render(); };
+  const backDexuatList = document.getElementById('btn-back-dexuat-list');
+  if(backDexuatList) backDexuatList.onclick = () => { dexuatSubView = 'list'; render(); };
+
+  /* Receiver menu */
+  const goVoucher = document.getElementById('btn-go-voucher');
+  if(goVoucher) goVoucher.onclick = () => { formRows = []; receiverView = 'voucherForm'; render(); };
+  const goProposal = document.getElementById('btn-go-proposal');
+  if(goProposal) goProposal.onclick = () => { proposalRows = []; receiverView = 'proposalForm'; render(); };
+  const goLookup = document.getElementById('btn-go-lookup');
+  if(goLookup) goLookup.onclick = () => { receiverView = 'lookup'; render(); };
+
+  /* Voucher form rows */
+  const addRow = document.getElementById('btn-add-row');
+  if(addRow) addRow.onclick = () => { syncRowsFromDOM(); formRows.push({rowId: uid(), itemId:'', qty:''}); render(); };
+  document.querySelectorAll('.rm-row').forEach(btn => btn.onclick = (e) => {
+    syncRowsFromDOM();
+    const rowEl = e.target.closest('[data-row]');
+    formRows = formRows.filter(r => r.rowId !== rowEl.dataset.row);
+    if(formRows.length===0) formRows = [{rowId: uid(), itemId:'', qty:''}];
+    render();
+  });
+  document.querySelectorAll('.row-item').forEach(sel => sel.onchange = () => { syncRowsFromDOM(); render(); });
+  const submitVoucher = document.getElementById('btn-submit-voucher');
+  if(submitVoucher) submitVoucher.onclick = onSubmitVoucher;
+
+  /* Proposal form rows */
+  const addPRow = document.getElementById('btn-add-prow');
+  if(addPRow) addPRow.onclick = () => { syncPRowsFromDOM(); proposalRows.push({rowId: uid(), name:'', unit:'', qty:''}); render(); };
+  document.querySelectorAll('.rm-prow').forEach(btn => btn.onclick = (e) => {
+    syncPRowsFromDOM();
+    const rowEl = e.target.closest('[data-prow]');
+    proposalRows = proposalRows.filter(r => r.rowId !== rowEl.dataset.prow);
+    if(proposalRows.length===0) proposalRows = [{rowId: uid(), name:'', unit:'', qty:''}];
+    render();
+  });
+  const submitProposal = document.getElementById('btn-submit-proposal');
+  if(submitProposal) submitProposal.onclick = onSubmitProposal;
+
+  /* Lookup */
+  const lookupInput = document.getElementById('lookup-input');
+  if(lookupInput) lookupInput.oninput = () => { lookupName = lookupInput.value; renderLookupInPlace(); };
+
+  /* Issuer login */
+  const setupBtn = document.getElementById('btn-issuer-setup-submit');
+  if(setupBtn) setupBtn.onclick = onIssuerSetupSubmit;
+  const loginSubmit = document.getElementById('btn-issuer-login-submit');
+  if(loginSubmit) loginSubmit.onclick = onIssuerLoginSubmit;
+
+  /* Cấp phát (issuer) */
+  document.querySelectorAll('[data-filter]').forEach(c => c.onclick = () => { capphatFilter = c.dataset.filter; render(); });
+  document.querySelectorAll('[data-open-voucher]').forEach(el => el.onclick = () => {
+    selectedVoucherId = el.dataset.openVoucher; capphatSubView = 'detail'; render();
+  });
+  const confirmBtn = document.getElementById('btn-confirm'); if(confirmBtn) confirmBtn.onclick = onConfirmVoucher;
+  const rejectBtn = document.getElementById('btn-reject'); if(rejectBtn) rejectBtn.onclick = onRejectVoucher;
+  const printBtn = document.getElementById('btn-print'); if(printBtn) printBtn.onclick = onPrintVoucher;
+
+  /* Đề xuất (issuer) */
+  document.querySelectorAll('[data-dfilter]').forEach(c => c.onclick = () => { dexuatFilter = c.dataset.dfilter; render(); });
+  document.querySelectorAll('[data-open-proposal]').forEach(el => el.onclick = () => {
+    selectedProposalId = el.dataset.openProposal; dexuatSubView = 'detail'; render();
+  });
+  const approveP = document.getElementById('btn-approve-proposal'); if(approveP) approveP.onclick = onApproveProposal;
+  const rejectP = document.getElementById('btn-reject-proposal'); if(rejectP) rejectP.onclick = onRejectProposal;
+
+  /* Nhập kho (issuer) */
+  const addNiRow = document.getElementById('btn-ni-add-row');
+  if(addNiRow) addNiRow.onclick = () => { syncNiRowsFromDOM(); niRows.push({rowId: uid(), itemId:'', qty:'', newName:'', newUnit:'', newCategory:''}); render(); };
+  document.querySelectorAll('.rm-nirow').forEach(btn => btn.onclick = (e) => {
+    syncNiRowsFromDOM();
+    const rowEl = e.target.closest('[data-nirow]');
+    niRows = niRows.filter(r => r.rowId !== rowEl.dataset.nirow);
+    if(niRows.length===0) niRows = [{rowId: uid(), itemId:'', qty:'', newName:'', newUnit:'', newCategory:''}];
+    render();
+  });
+  document.querySelectorAll('.ni-row-item').forEach(sel => sel.onchange = () => { syncNiRowsFromDOM(); render(); });
+  const submitNK = document.getElementById('btn-submit-nhapkho'); if(submitNK) submitNK.onclick = onSubmitNhapKho;
+
+  /* Theo dõi (issuer) */
+  const s1 = document.getElementById('td-search'); if(s1) s1.oninput = () => { theodoiQuery.search = s1.value; renderTheoDoiInPlace(); };
+  const s2 = document.getElementById('td-category'); if(s2) s2.onchange = () => { theodoiQuery.category = s2.value; render(); };
+  const s3 = document.getElementById('td-status'); if(s3) s3.onchange = () => { theodoiQuery.status = s3.value; render(); };
+  const s4 = document.getElementById('td-sort'); if(s4) s4.onchange = () => { theodoiQuery.sort = s4.value; render(); };
+
+  /* Quản lý tài khoản (issuer) */
+  const addIssuerBtn = document.getElementById('btn-issuer-add-submit'); if(addIssuerBtn) addIssuerBtn.onclick = onAddIssuerSubmit;
+  document.querySelectorAll('[data-del-issuer]').forEach(btn => btn.onclick = () => onDeleteIssuer(btn.dataset.delIssuer));
+
+  /* Mount chữ ký (an toàn: chỉ mount nếu ô tồn tại và chưa có canvas) */
+  const sigC = document.getElementById('sig-receiver-container');
+  if(sigC && !sigC.querySelector('canvas')) sigReceiver = makeSignaturePad(sigC);
+  const sigG = document.getElementById('sig-giver-container');
+  if(sigG && !sigG.querySelector('canvas')) sigGiver = makeSignaturePad(sigG);
+}
+
+function renderLookupInPlace(){
+  const app = document.getElementById('app');
+  const scrollY = window.scrollY;
+  app.innerHTML = renderLookup();
+  bindEvents();
+  const el = document.getElementById('lookup-input');
+  if(el){ el.focus(); el.setSelectionRange(lookupName.length, lookupName.length); }
+  window.scrollTo(0, scrollY);
+}
+function renderTheoDoiInPlace(){
+  const app = document.getElementById('app');
+  const scrollY = window.scrollY;
+  app.innerHTML = renderTheoDoi();
+  bindEvents();
+  const el = document.getElementById('td-search');
+  if(el){ el.focus(); el.setSelectionRange(theodoiQuery.search.length, theodoiQuery.search.length); }
+  window.scrollTo(0, scrollY);
+}
+
+function syncRowsFromDOM(){
+  document.querySelectorAll('#item-rows .item-row').forEach(rowEl => {
+    const row = formRows.find(r => r.rowId === rowEl.dataset.row); if(!row) return;
+    row.itemId = rowEl.querySelector('.row-item').value; row.qty = rowEl.querySelector('.row-qty').value;
+  });
+}
+function syncPRowsFromDOM(){
+  document.querySelectorAll('#proposal-rows .prow').forEach(rowEl => {
+    const row = proposalRows.find(r => r.rowId === rowEl.dataset.prow); if(!row) return;
+    row.name = rowEl.querySelector('.prow-name').value;
+    row.unit = rowEl.querySelector('.prow-unit').value;
+    row.qty = rowEl.querySelector('.prow-qty').value;
+  });
+}
+function syncNiRowsFromDOM(){
+  document.querySelectorAll('#ni-rows [data-nirow]').forEach(rowEl => {
+    const row = niRows.find(r => r.rowId === rowEl.dataset.nirow); if(!row) return;
+    row.itemId = rowEl.querySelector('.ni-row-item').value; row.qty = rowEl.querySelector('.ni-row-qty').value;
+    const nameEl = rowEl.querySelector('.ni-row-newname'); const unitEl = rowEl.querySelector('.ni-row-newunit'); const catEl = rowEl.querySelector('.ni-row-newcat');
+    if(nameEl) row.newName = nameEl.value; if(unitEl) row.newUnit = unitEl.value; if(catEl) row.newCategory = catEl.value;
+  });
+}
+
+/* ================= ACTIONS: Xác thực người cấp phát ================= */
+async function onIssuerSetupSubmit(){
+  const fullName = document.getElementById('au-setup-fullname').value.trim();
+  const username = document.getElementById('au-setup-username').value.trim().toLowerCase();
+  const password = document.getElementById('au-setup-password').value;
+  if(!fullName || !username || !password){ toast('Vui lòng nhập đầy đủ thông tin.', true); return; }
+  if(password.length < 4){ toast('Mật khẩu cần tối thiểu 4 ký tự.', true); return; }
+  const passwordHash = await sha256Hex(password);
+  const account = { id: uid(), username, fullName, passwordHash, createdAt: Date.now() };
+  ISSUERS.push(account);
+  const ok = await saveIssuers();
+  if(ok){
+    currentIssuer = { id: account.id, username: account.username, fullName: account.fullName };
+    toast(`Đã tạo tài khoản và đăng nhập với vai trò ${fullName}.`);
+    appMode = 'issuer'; issuerTab = 'capphat'; capphatSubView = 'list';
+    render();
+  }
+}
+async function onIssuerLoginSubmit(){
+  const username = document.getElementById('au-login-username').value.trim().toLowerCase();
+  const password = document.getElementById('au-login-password').value;
+  if(!username || !password){ toast('Vui lòng nhập tên đăng nhập và mật khẩu.', true); return; }
+  const account = ISSUERS.find(u => u.username === username);
+  if(!account){ toast('Tên đăng nhập không tồn tại.', true); return; }
+  const passwordHash = await sha256Hex(password);
+  if(passwordHash !== account.passwordHash){ toast('Sai mật khẩu.', true); return; }
+  currentIssuer = { id: account.id, username: account.username, fullName: account.fullName };
+  toast(`Xin chào ${account.fullName}.`);
+  appMode = 'issuer'; issuerTab = 'capphat'; capphatSubView = 'list';
+  render();
+}
+async function onAddIssuerSubmit(){
+  const fullName = document.getElementById('au-new-fullname').value.trim();
+  const username = document.getElementById('au-new-username').value.trim().toLowerCase();
+  const password = document.getElementById('au-new-password').value;
+  if(!fullName || !username || !password){ toast('Vui lòng nhập đầy đủ thông tin.', true); return; }
+  if(password.length < 4){ toast('Mật khẩu cần tối thiểu 4 ký tự.', true); return; }
+  if(ISSUERS.some(u => u.username === username)){ toast('Tên đăng nhập đã tồn tại, vui lòng chọn tên khác.', true); return; }
+  const passwordHash = await sha256Hex(password);
+  ISSUERS.push({ id: uid(), username, fullName, passwordHash, createdAt: Date.now() });
+  const ok = await saveIssuers();
+  if(ok){ toast(`Đã thêm tài khoản cho ${fullName}.`); render(); }
+}
+async function onDeleteIssuer(id){
+  const acc = ISSUERS.find(u => u.id === id); if(!acc) return;
+  if(ISSUERS.length === 1){ toast('Không thể xóa tài khoản cấp phát duy nhất còn lại.', true); return; }
+  if(!confirm(`Xóa tài khoản "${acc.fullName}" (@${acc.username})?`)) return;
+  ISSUERS = ISSUERS.filter(u => u.id !== id);
+  const ok = await saveIssuers();
+  if(ok){ if(currentIssuer && currentIssuer.id === id){ currentIssuer = null; appMode = 'landing'; } toast('Đã xóa tài khoản.'); render(); }
+}
+
+/* ================= ACTIONS: Cấp phát ================= */
+async function onSubmitVoucher(){
+  syncRowsFromDOM();
+  const receiverName = document.getElementById('f-receiver').value.trim();
+  const department = document.getElementById('f-department').value.trim();
+  const date = document.getElementById('f-date').value || todayISO();
+  if(!receiverName || !department){ toast('Vui lòng nhập đầy đủ họ tên và bộ phận.', true); return; }
+  const validRows = formRows.filter(r => r.itemId && Number(r.qty) > 0);
+  if(validRows.length === 0){ toast('Vui lòng chọn ít nhất một vật phẩm với số lượng hợp lệ.', true); return; }
+  if(!sigReceiver || sigReceiver.isEmpty()){ toast('Vui lòng ký xác nhận trước khi gửi phiếu.', true); return; }
+
+  const items = validRows.map(r => { const it = ITEMS.find(i => i.id === r.itemId); return { itemId: it.id, code: it.code, name: it.name, unit: it.unit, qty: Number(r.qty) }; });
+  const voucher = {
+    id: uid(), code: genVoucherCode(), date, department, receiverName, items,
+    receiverSignature: sigReceiver.toDataURL(), giverName: null, giverUsername: null, giverSignature: null,
+    status: 'pending', createdAt: Date.now(), confirmedDate: null, rejectReason: null, rejectedBy: null
+  };
+  VOUCHERS.push(voucher);
+  const ok = await saveVouchers();
+  if(ok){ toast('Đã gửi phiếu, đang chờ người cấp phát duyệt.'); formRows = []; receiverView = 'menu'; render(); }
+}
+async function onConfirmVoucher(){
+  const v = VOUCHERS.find(x => x.id === selectedVoucherId); if(!v) return;
+  if(!sigGiver || sigGiver.isEmpty()){ toast('Vui lòng ký xác nhận cấp phát.', true); return; }
+  const insufficient = v.items.filter(it => { const stockItem = ITEMS.find(i => i.id === it.itemId); return !stockItem || stockItem.stock < it.qty; });
+  if(insufficient.length > 0){
+    const names = insufficient.map(i=>i.name).join(', ');
+    if(!confirm(`Các vật phẩm sau không đủ tồn kho: ${names}.\nBạn vẫn muốn xác nhận cấp phát (tồn kho có thể xuống âm)?`)) return;
+  }
+  v.items.forEach(it => { const stockItem = ITEMS.find(i => i.id === it.itemId); if(stockItem) stockItem.stock -= it.qty; });
+  v.giverName = currentIssuer.fullName; v.giverUsername = currentIssuer.username; v.giverSignature = sigGiver.toDataURL();
+  v.status = 'confirmed'; v.confirmedDate = todayISO();
+  const ok1 = await saveItems(); const ok2 = await saveVouchers();
+  if(ok1 && ok2){ toast('Đã xác nhận cấp phát và cập nhật tồn kho.'); render(); }
+}
+async function onRejectVoucher(){
+  const v = VOUCHERS.find(x => x.id === selectedVoucherId); if(!v) return;
+  const reason = prompt('Lý do từ chối phiếu (không bắt buộc):', '') || '';
+  v.status = 'rejected'; v.rejectReason = reason; v.rejectedBy = currentIssuer.fullName; v.rejectedDate = todayISO();
+  const ok = await saveVouchers();
+  if(ok){ toast('Đã từ chối phiếu.'); render(); }
+}
+function onPrintVoucher(){
+  const v = VOUCHERS.find(x => x.id === selectedVoucherId); if(!v) return;
+  const rows = v.items.map((it,i) => `<tr><td>${i+1}</td><td>${esc(it.code||'—')}</td><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td>${it.qty}</td></tr>`).join('');
+  document.getElementById('print-area').innerHTML = `
+    <div class="p-head"><span>Số phiếu: ${esc(v.code)}</span><span>Ngày: ${fmtDate(v.date)}</span></div>
+    <div class="p-title">PHIẾU CẤP PHÁT VĂN PHÒNG PHẨM / PHỤ KIỆN</div>
+    <div class="p-sub">Bộ phận: ${esc(v.department)}</div>
+    <div class="p-meta"><span>Người nhận: <b>${esc(v.receiverName)}</b></span><span>Trạng thái: Đã cấp phát</span></div>
+    <table class="p-table"><thead><tr><th>STT</th><th>Mã VP</th><th>Tên vật phẩm</th><th>ĐVT</th><th>Số lượng</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="p-sign">
+      <div><div class="role">NGƯỜI NHẬN</div><div class="note">Ký và ghi rõ họ tên</div>${v.receiverSignature ? `<img src="${v.receiverSignature}">` : ''}<div class="name">${esc(v.receiverName)}</div></div>
+      <div><div class="role">NGƯỜI CẤP PHÁT</div><div class="note">Ký và ghi rõ họ tên</div>${v.giverSignature ? `<img src="${v.giverSignature}">` : ''}<div class="name">${esc(v.giverName||'')}</div></div>
+    </div>`;
+  window.print();
+}
+
+/* ================= ACTIONS: Đề xuất ================= */
+async function onSubmitProposal(){
+  syncPRowsFromDOM();
+  const proposerName = document.getElementById('p-proposer').value.trim();
+  const date = document.getElementById('p-date').value || todayISO();
+  if(!proposerName){ toast('Vui lòng nhập họ tên người đề xuất.', true); return; }
+  const validRows = proposalRows.filter(r => r.name.trim() && r.unit.trim() && Number(r.qty) > 0);
+  if(validRows.length === 0){ toast('Vui lòng nhập ít nhất một vật phẩm hợp lệ (tên, đơn vị, số lượng).', true); return; }
+
+  const proposal = {
+    id: uid(), code: genProposalCode(), date, proposerName,
+    items: validRows.map(r => ({ name: r.name.trim(), unit: r.unit.trim(), qty: Number(r.qty) })),
+    status: 'pending', reviewedBy: null, reviewedDate: null, rejectReason: null, createdAt: Date.now()
+  };
+  PROPOSALS.push(proposal);
+  const ok = await saveProposals();
+  if(ok){ toast('Đã gửi đề xuất, đang chờ người cấp phát xem xét.'); proposalRows = []; receiverView = 'menu'; render(); }
+}
+async function onApproveProposal(){
+  const p = PROPOSALS.find(x => x.id === selectedProposalId); if(!p) return;
+  let itemsChanged = false;
+  p.items.forEach(it => {
+    const exists = ITEMS.find(i => i.name.trim().toLowerCase() === it.name.trim().toLowerCase());
+    if(!exists){ ITEMS.push({ id: uid(), code: genItemCode(), name: it.name, unit: it.unit, category: '', stock: 0 }); itemsChanged = true; }
+  });
+  p.status = 'approved'; p.reviewedBy = currentIssuer.fullName; p.reviewedDate = todayISO();
+  const ok1 = itemsChanged ? await saveItems() : true;
+  const ok2 = await saveProposals();
+  if(ok1 && ok2){ toast('Đã duyệt đề xuất. Vật phẩm mới (nếu có) đã được thêm vào danh mục kho (tồn = 0).'); render(); }
+}
+async function onRejectProposal(){
+  const p = PROPOSALS.find(x => x.id === selectedProposalId); if(!p) return;
+  const reason = prompt('Lý do từ chối đề xuất (không bắt buộc):', '') || '';
+  p.status = 'rejected'; p.rejectReason = reason; p.reviewedBy = currentIssuer.fullName; p.reviewedDate = todayISO();
+  const ok = await saveProposals();
+  if(ok){ toast('Đã từ chối đề xuất.'); render(); }
+}
+
+/* ================= ACTIONS: Nhập kho ================= */
+async function onSubmitNhapKho(){
+  syncNiRowsFromDOM();
+  const date = document.getElementById('ni-date').value || todayISO();
+  const supplier = document.getElementById('ni-supplier').value.trim();
+  const importer = document.getElementById('ni-importer').value.trim();
+  const note = document.getElementById('ni-note').value.trim();
+  const validRows = niRows.filter(r => r.itemId && Number(r.qty) > 0);
+  if(validRows.length === 0){ toast('Vui lòng chọn ít nhất một vật phẩm với số lượng hợp lệ.', true); return; }
+  for(const r of validRows){
+    if(r.itemId === '__new__' && (!r.newName || !r.newName.trim() || !r.newUnit || !r.newUnit.trim())){
+      toast('Vui lòng nhập đủ tên và đơn vị tính cho vật phẩm mới trong phiếu.', true); return;
+    }
+  }
+  const recordItems = [];
+  validRows.forEach(r => {
+    let item;
+    if(r.itemId === '__new__'){ item = { id: uid(), code: genItemCode(), name: r.newName.trim(), unit: r.newUnit.trim(), category: (r.newCategory||'').trim(), stock: 0 }; ITEMS.push(item); }
+    else item = ITEMS.find(i => i.id === r.itemId);
+    if(!item) return;
+    const qty = Number(r.qty); item.stock += qty;
+    recordItems.push({ itemId: item.id, code: item.code, name: item.name, unit: item.unit, qty });
+  });
+  const record = { id: uid(), code: genStockInCode(), date, items: recordItems, supplier, importer, note, createdAt: Date.now() };
+  STOCKINS.push(record);
+  const ok1 = await saveItems(); const ok2 = await saveStockIns();
+  if(ok1 && ok2){ toast(`Đã ghi nhận phiếu nhập kho ${record.code} (${recordItems.length} vật phẩm).`); niRows = []; render(); }
+}
+
+/* ================= INIT ================= */
+async function init(){
+  [ITEMS, VOUCHERS, STOCKINS, ISSUERS, PROPOSALS] = await Promise.all([
+    loadItems(), loadVouchers(), loadStockIns(), loadIssuers(), loadProposals()
+  ]);
+  let needsMigration = false;
+  ITEMS.forEach(it => { if(!it.code){ it.code = genItemCode(); needsMigration = true; } });
+  if(needsMigration) await saveItems();
+  render();
+}
+init();
+
+})();
+</script>
+</body>
+</html>
