@@ -65,7 +65,7 @@
   .btn[disabled]{opacity:.45;cursor:not-allowed;}
 
   label{display:block;font-size:13px;font-weight:600;color:var(--teal);margin:0 0 5px 2px;}
-  input[type=text],input[type=number],input[type=date],select,textarea{
+  input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{
     width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);
   }
   input:focus,select:focus,textarea:focus{outline:2px solid var(--teal-2);outline-offset:1px;background:#fff;}
@@ -530,14 +530,8 @@ function renderLanding(){
 function issuerAuthCardHtml(){
   if(ISSUERS.length === 0){
     return `
-    <h3>Thiết lập tài khoản cấp phát đầu tiên</h3>
-    <div class="muted" style="margin-bottom:14px;">Kho chưa có tài khoản nào. Tạo tài khoản quản trị đầu tiên bên dưới.</div>
-    <div class="field"><label>Họ tên *</label><input type="text" id="au-setup-fullname" placeholder="Nguyễn Văn A"></div>
-    <div class="grid2">
-      <div class="field"><label>Tên đăng nhập *</label><input type="text" id="au-setup-username" placeholder="vd: vana"></div>
-      <div class="field"><label>Mật khẩu *</label><input type="password" id="au-setup-password" placeholder="Tối thiểu 4 ký tự"></div>
-    </div>
-    <button class="btn btn-primary btn-block" id="btn-issuer-setup-submit">Tạo tài khoản &amp; đăng nhập</button>`;
+    <h3>🔒 Chưa có tài khoản nào được thiết lập</h3>
+    <div class="muted">Vì lý do bảo mật, tài khoản người cấp phát không thể tự đăng ký trên trang này. Vui lòng liên hệ quản trị viên hệ thống để được tạo tài khoản trực tiếp trên Google Sheet.</div>`;
   }
   return `
   <h3>Đăng nhập người cấp phát</h3>
@@ -1007,7 +1001,7 @@ function renderIssuerAdmin(){
     <div class="field"><label>Họ tên *</label><input type="text" id="au-new-fullname" placeholder="Trần Thị B"></div>
     <div class="grid2">
       <div class="field"><label>Tên đăng nhập *</label><input type="text" id="au-new-username" placeholder="vd: thib"></div>
-      <div class="field"><label>Mật khẩu *</label><input type="text" id="au-new-password" placeholder="Tối thiểu 4 ký tự"></div>
+      <div class="field"><label>Mật khẩu *</label><input type="password" id="au-new-password" placeholder="Tối thiểu 4 ký tự"></div>
     </div>
     <button class="btn btn-primary btn-block" id="btn-issuer-add-submit">+ Thêm tài khoản</button>
   </div>`;
@@ -1072,8 +1066,6 @@ function bindEvents(){
   if(lookupInput) lookupInput.oninput = () => { lookupName = lookupInput.value; renderLookupInPlace(); };
 
   /* Issuer login */
-  const setupBtn = document.getElementById('btn-issuer-setup-submit');
-  if(setupBtn) setupBtn.onclick = onIssuerSetupSubmit;
   const loginSubmit = document.getElementById('btn-issuer-login-submit');
   if(loginSubmit) loginSubmit.onclick = onIssuerLoginSubmit;
 
@@ -1218,23 +1210,6 @@ function syncNiRowsFromDOM(){
 }
 
 /* ================= ACTIONS: Xác thực người cấp phát ================= */
-async function onIssuerSetupSubmit(){
-  const fullName = document.getElementById('au-setup-fullname').value.trim();
-  const username = document.getElementById('au-setup-username').value.trim().toLowerCase();
-  const password = document.getElementById('au-setup-password').value;
-  if(!fullName || !username || !password){ toast('Vui lòng nhập đầy đủ thông tin.', true); return; }
-  if(password.length < 4){ toast('Mật khẩu cần tối thiểu 4 ký tự.', true); return; }
-  const passwordHash = await sha256Hex(password);
-  const account = { id: uid(), username, fullName, passwordHash, createdAt: Date.now() };
-  ISSUERS.push(account);
-  const ok = await saveIssuers();
-  if(ok){
-    currentIssuer = { id: account.id, username: account.username, fullName: account.fullName };
-    toast(`Đã tạo tài khoản và đăng nhập với vai trò ${fullName}.`);
-    appMode = 'issuer'; issuerTab = 'capphat'; capphatSubView = 'list';
-    render();
-  }
-}
 async function onIssuerLoginSubmit(){
   const username = document.getElementById('au-login-username').value.trim().toLowerCase();
   const password = document.getElementById('au-login-password').value;
