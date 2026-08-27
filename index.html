@@ -576,18 +576,13 @@ function renderReceiverMenu(){
 
 /* ---- Tạo phiếu cấp phát ---- */
 function renderVoucherForm(){
-  if(formRows.length === 0) formRows = [{rowId: uid(), itemId:'', qty:''}];
-  const itemOptions = ITEMS.slice().sort((a,b)=>a.name.localeCompare(b.name,'vi'));
-  if(itemOptions.length === 0){
-    return `
-    <button class="backlink" id="btn-back-menu">← Quay lại</button>
-    <div class="card"><div class="empty"><div class="big">📭</div>Kho chưa có vật phẩm nào.<br>Vui lòng liên hệ người quản lý kho để được nhập hàng trước, hoặc gửi <b>Đề xuất</b> để yêu cầu nhập vật phẩm mới.</div></div>`;
-  }
+  if(formRows.length === 0) formRows = [{rowId: uid(), mode:'select', itemId:'', qty:'', freeName:'', freeUnit:''}];
   return `
   <button class="backlink" id="btn-back-menu">← Quay lại</button>
   <div class="card">
     <h3>Tạo phiếu cấp phát</h3>
-    <div class="muted" style="margin-bottom:16px;">Điền thông tin người nhận và ký xác nhận. Phiếu sẽ chuyển tới người cấp phát để duyệt.</div>
+    <div class="muted" style="margin-bottom:16px;">Điền thông tin người nhận và ký xác nhận. Phiếu sẽ chuyển tới người cấp phát để duyệt.
+    ${ITEMS.length === 0 ? '<br><b>Lưu ý:</b> kho hiện chưa có vật phẩm nào trong danh mục — bạn vẫn tạo phiếu được, chỉ cần dùng chế độ "nhập tên tự do" ở mỗi dòng bên dưới. Người cấp phát sẽ xem xét và quyết định.' : ''}</div>
     <div class="grid2">
       <div class="field"><label>Họ tên người nhận *</label><input type="text" id="f-receiver" placeholder="Nguyễn Văn A"></div>
       <div class="field"><label>Bộ phận / Phòng ban *</label>
@@ -608,17 +603,32 @@ function renderVoucherForm(){
   </div>`;
 }
 function voucherRowHtml(row){
+  const isFree = row.mode === 'free';
+  if(isFree){
+    return `
+    <div class="card" style="background:var(--paper);padding:12px;margin-bottom:8px;" data-row="${row.rowId}">
+      <div class="muted" style="margin-bottom:8px;">Nhập tên tự do (vật phẩm chưa có trong kho)</div>
+      <div class="item-row" style="grid-template-columns:1.3fr 1fr 70px 34px;">
+        <div><input type="text" class="row-freename" placeholder="Tên vật phẩm" value="${esc(row.freeName||'')}"></div>
+        <div><input type="text" class="row-freeunit" list="dl-units" placeholder="Đơn vị tính" value="${esc(row.freeUnit||'')}"></div>
+        <div><input type="number" min="1" class="row-qty" placeholder="SL" value="${esc(row.qty)}"></div>
+        <button type="button" class="rm-row" title="Xóa dòng">✕</button>
+      </div>
+      <button type="button" class="btn btn-sm row-mode-select" style="margin-top:8px;">← Chọn từ danh sách có sẵn</button>
+    </div>`;
+  }
   const opts = ITEMS.slice().sort((a,b)=>a.name.localeCompare(b.name,'vi'))
     .map(it => `<option value="${it.id}" ${row.itemId===it.id?'selected':''}>[${esc(it.code)}] ${esc(it.name)}</option>`).join('');
   const item = ITEMS.find(i => i.id === row.itemId);
   return `
   <div class="item-row" data-row="${row.rowId}">
     <div><select class="row-item"><option value="">— Chọn vật phẩm —</option>${opts}</select>
-    ${item ? `<div class="stockhint">Mã: ${esc(item.code)} · Đơn vị: ${esc(item.unit)} · Tồn kho: ${item.stock}</div>` : ''}</div>
+    ${item ? `<div class="stockhint">Mã: ${esc(item.code)} · Đơn vị: ${esc(item.unit)} · Tồn kho: ${item.stock}</div>` : ITEMS.length===0 ? `<div class="stockhint">Kho chưa có vật phẩm — bấm "nhập tên tự do" bên cạnh</div>` : ''}</div>
     <div><input type="number" min="1" class="row-qty" placeholder="SL" value="${esc(row.qty)}"></div>
     <div style="align-self:center;font-size:13px;color:var(--sage);">${item ? esc(item.unit) : ''}</div>
     <button type="button" class="rm-row" title="Xóa dòng">✕</button>
-  </div>`;
+  </div>
+  <button type="button" class="btn btn-sm row-mode-free" data-row-free="${row.rowId}" style="margin:-4px 0 10px 0;">✏️ Vật phẩm chưa có trong kho? Nhập tên tự do</button>`;
 }
 
 /* ---- Tạo đề xuất ---- */
@@ -1047,15 +1057,28 @@ function bindEvents(){
 
   /* Voucher form rows */
   const addRow = document.getElementById('btn-add-row');
-  if(addRow) addRow.onclick = () => { syncRowsFromDOM(); formRows.push({rowId: uid(), itemId:'', qty:''}); render(); };
+  if(addRow) addRow.onclick = () => { syncRowsFromDOM(); formRows.push({rowId: uid(), mode:'select', itemId:'', qty:'', freeName:'', freeUnit:''}); render(); };
   document.querySelectorAll('.rm-row').forEach(btn => btn.onclick = (e) => {
     syncRowsFromDOM();
     const rowEl = e.target.closest('[data-row]');
     formRows = formRows.filter(r => r.rowId !== rowEl.dataset.row);
-    if(formRows.length===0) formRows = [{rowId: uid(), itemId:'', qty:''}];
+    if(formRows.length===0) formRows = [{rowId: uid(), mode:'select', itemId:'', qty:'', freeName:'', freeUnit:''}];
     render();
   });
   document.querySelectorAll('.row-item').forEach(sel => sel.onchange = () => { syncRowsFromDOM(); render(); });
+  document.querySelectorAll('.row-mode-free').forEach(btn => btn.onclick = () => {
+    syncRowsFromDOM();
+    const row = formRows.find(r => r.rowId === btn.dataset.rowFree);
+    if(row){ row.mode = 'free'; row.itemId = ''; }
+    render();
+  });
+  document.querySelectorAll('.row-mode-select').forEach(btn => btn.onclick = (e) => {
+    syncRowsFromDOM();
+    const rowEl = e.target.closest('[data-row]');
+    const row = formRows.find(r => r.rowId === rowEl.dataset.row);
+    if(row){ row.mode = 'select'; row.freeName = ''; row.freeUnit = ''; }
+    render();
+  });
   const submitVoucher = document.getElementById('btn-submit-voucher');
   if(submitVoucher) submitVoucher.onclick = onSubmitVoucher;
 
@@ -1196,9 +1219,12 @@ function renderTheoDoiInPlace(){
 }
 
 function syncRowsFromDOM(){
-  document.querySelectorAll('#item-rows .item-row').forEach(rowEl => {
+  document.querySelectorAll('#item-rows [data-row]').forEach(rowEl => {
     const row = formRows.find(r => r.rowId === rowEl.dataset.row); if(!row) return;
-    row.itemId = rowEl.querySelector('.row-item').value; row.qty = rowEl.querySelector('.row-qty').value;
+    const qtyEl = rowEl.querySelector('.row-qty'); if(qtyEl) row.qty = qtyEl.value;
+    const itemSel = rowEl.querySelector('.row-item'); if(itemSel) row.itemId = itemSel.value;
+    const freeNameEl = rowEl.querySelector('.row-freename'); if(freeNameEl) row.freeName = freeNameEl.value;
+    const freeUnitEl = rowEl.querySelector('.row-freeunit'); if(freeUnitEl) row.freeUnit = freeUnitEl.value;
   });
 }
 function syncPRowsFromDOM(){
@@ -1262,11 +1288,17 @@ async function onSubmitVoucher(){
   const department = document.getElementById('f-department').value.trim();
   const date = document.getElementById('f-date').value || todayISO();
   if(!receiverName || !department){ toast('Vui lòng nhập đầy đủ họ tên và bộ phận.', true); return; }
-  const validRows = formRows.filter(r => r.itemId && Number(r.qty) > 0);
-  if(validRows.length === 0){ toast('Vui lòng chọn ít nhất một vật phẩm với số lượng hợp lệ.', true); return; }
+  const validRows = formRows.filter(r => r.mode === 'free'
+    ? ((r.freeName||'').trim() && (r.freeUnit||'').trim() && Number(r.qty) > 0)
+    : (r.itemId && Number(r.qty) > 0));
+  if(validRows.length === 0){ toast('Vui lòng nhập ít nhất một vật phẩm với số lượng hợp lệ.', true); return; }
   if(!sigReceiver || sigReceiver.isEmpty()){ toast('Vui lòng ký xác nhận trước khi gửi phiếu.', true); return; }
 
-  const items = validRows.map(r => { const it = ITEMS.find(i => i.id === r.itemId); return { itemId: it.id, code: it.code, name: it.name, unit: it.unit, qty: Number(r.qty) }; });
+  const items = validRows.map(r => {
+    if(r.mode === 'free') return { itemId: null, code: '', name: r.freeName.trim(), unit: r.freeUnit.trim(), qty: Number(r.qty) };
+    const it = ITEMS.find(i => i.id === r.itemId);
+    return { itemId: it.id, code: it.code, name: it.name, unit: it.unit, qty: Number(r.qty) };
+  });
   const voucher = {
     id: uid(), code: genVoucherCode(), date, department, receiverName, items,
     receiverSignature: sigReceiver.toDataURL(), giverName: null, giverUsername: null, giverSignature: null,
