@@ -468,6 +468,7 @@ let capphatSubView = 'list'; let capphatFilter = 'all'; let selectedVoucherId = 
 let dexuatSubView = 'list'; let dexuatFilter = 'all'; let selectedProposalId = null;
 
 let formRows = [];       // dòng vật phẩm trong phiếu cấp phát
+let voucherFormReceiver = '', voucherFormDepartment = '', voucherFormDate = '';
 let proposalRows = [];   // dòng vật phẩm trong đề xuất
 let niRows = [];         // dòng vật phẩm trong nhập kho
 let sigReceiver = null, sigGiver = null;
@@ -584,6 +585,7 @@ function renderReceiverMenu(){
 /* ---- Tạo phiếu cấp phát ---- */
 function renderVoucherForm(){
   if(formRows.length === 0) formRows = [{rowId: uid(), mode:'select', itemId:'', qty:'', freeName:'', freeUnit:''}];
+  if(!voucherFormDate) voucherFormDate = todayISO();
   return `
   <button class="backlink" id="btn-back-menu">← Quay lại</button>
   <div class="card">
@@ -591,15 +593,15 @@ function renderVoucherForm(){
     <div class="muted" style="margin-bottom:16px;">Điền thông tin người nhận và ký xác nhận. Phiếu sẽ chuyển tới người cấp phát để duyệt.
     ${ITEMS.length === 0 ? '<br><b>Lưu ý:</b> kho hiện chưa có vật phẩm nào trong danh mục — bạn vẫn tạo phiếu được, chỉ cần dùng chế độ "nhập tên tự do" ở mỗi dòng bên dưới. Người cấp phát sẽ xem xét và quyết định.' : ''}</div>
     <div class="grid2">
-      <div class="field"><label>Họ tên người nhận *</label><input type="text" id="f-receiver" placeholder="Nguyễn Văn A"></div>
+      <div class="field"><label>Họ tên người nhận *</label><input type="text" id="f-receiver" placeholder="Nguyễn Văn A" value="${esc(voucherFormReceiver)}"></div>
       <div class="field"><label>Bộ phận / Phòng ban *</label>
         <select id="f-department">
           <option value="">— Chọn bộ phận —</option>
-          ${DEPARTMENTS.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}
+          ${DEPARTMENTS.map(d => `<option value="${esc(d)}" ${voucherFormDepartment===d?'selected':''}>${esc(d)}</option>`).join('')}
         </select>
       </div>
     </div>
-    <div class="field"><label>Ngày lập phiếu</label><input type="date" id="f-date" value="${todayISO()}"></div>
+    <div class="field"><label>Ngày lập phiếu</label><input type="date" id="f-date" value="${esc(voucherFormDate)}"></div>
 
     <label style="margin-top:6px;">Danh sách vật phẩm cần cấp *</label>
     <div id="item-rows">${formRows.map(voucherRowHtml).join('')}</div>
@@ -1056,7 +1058,7 @@ function bindEvents(){
 
   /* Receiver menu */
   const goVoucher = document.getElementById('btn-go-voucher');
-  if(goVoucher) goVoucher.onclick = () => { formRows = []; receiverView = 'voucherForm'; render(); };
+  if(goVoucher) goVoucher.onclick = () => { formRows = []; voucherFormReceiver = ''; voucherFormDepartment = ''; voucherFormDate = ''; receiverView = 'voucherForm'; render(); };
   const goProposal = document.getElementById('btn-go-proposal');
   if(goProposal) goProposal.onclick = () => { proposalRows = []; receiverView = 'proposalForm'; render(); };
   const goLookup = document.getElementById('btn-go-lookup');
@@ -1233,6 +1235,9 @@ function syncRowsFromDOM(){
     const freeNameEl = rowEl.querySelector('.row-freename'); if(freeNameEl) row.freeName = freeNameEl.value;
     const freeUnitEl = rowEl.querySelector('.row-freeunit'); if(freeUnitEl) row.freeUnit = freeUnitEl.value;
   });
+  const receiverEl = document.getElementById('f-receiver'); if(receiverEl) voucherFormReceiver = receiverEl.value;
+  const departmentEl = document.getElementById('f-department'); if(departmentEl) voucherFormDepartment = departmentEl.value;
+  const dateEl = document.getElementById('f-date'); if(dateEl) voucherFormDate = dateEl.value;
 }
 function syncPRowsFromDOM(){
   document.querySelectorAll('#proposal-rows .prow').forEach(rowEl => {
@@ -1313,7 +1318,7 @@ async function onSubmitVoucher(){
   };
   VOUCHERS.push(voucher);
   const ok = await saveVouchers();
-  if(ok){ toast('Đã gửi phiếu, đang chờ người cấp phát duyệt.'); formRows = []; receiverView = 'menu'; render(); }
+  if(ok){ toast('Đã gửi phiếu, đang chờ người cấp phát duyệt.'); formRows = []; voucherFormReceiver = ''; voucherFormDepartment = ''; voucherFormDate = ''; receiverView = 'menu'; render(); }
 }
 async function onConfirmVoucher(){
   const v = VOUCHERS.find(x => x.id === selectedVoucherId); if(!v) return;
