@@ -340,7 +340,7 @@ async function loadProposals(){
   rows.forEach(r => {
     const id = String(r.id);
     if(!map[id]) map[id] = {
-      id, code:String(r.code||''), date:String(r.date||''), proposerName:String(r.proposerName||''),
+      id, code:String(r.code||''), date:String(r.date||''), proposerName:String(r.proposerName||''), department:String(r.department||''),
       status:String(r.status||'pending'), reviewedBy:r.reviewedBy||null, reviewedDate:r.reviewedDate||null,
       rejectReason:r.rejectReason||null, createdAt:Number(r.createdAt||0), items:[]
     };
@@ -351,7 +351,7 @@ async function loadProposals(){
 async function saveProposals(){
   const rows = [];
   PROPOSALS.forEach(p => p.items.forEach(it => rows.push({
-    id: p.id, code: p.code, date: p.date, proposerName: p.proposerName,
+    id: p.id, code: p.code, date: p.date, proposerName: p.proposerName, department: p.department||'',
     status: p.status, reviewedBy: p.reviewedBy||'', reviewedDate: p.reviewedDate||'', rejectReason: p.rejectReason||'',
     createdAt: p.createdAt, itemName: it.name, itemUnit: it.unit, qty: it.qty
   })));
@@ -629,7 +629,15 @@ function renderProposalForm(){
   <div class="card">
     <h3>Tạo đề xuất nhập vật phẩm</h3>
     <div class="muted" style="margin-bottom:16px;">Dùng khi cần đề xuất vật phẩm chưa có trong kho (hoặc cần nhập thêm). Người cấp phát sẽ xem xét và duyệt.</div>
-    <div class="field"><label>Họ tên người đề xuất *</label><input type="text" id="p-proposer" placeholder="Nguyễn Văn A"></div>
+    <div class="grid2">
+      <div class="field"><label>Họ tên người đề xuất *</label><input type="text" id="p-proposer" placeholder="Nguyễn Văn A"></div>
+      <div class="field"><label>Bộ phận / Phòng ban *</label>
+        <select id="p-department">
+          <option value="">— Chọn bộ phận —</option>
+          ${DEPARTMENTS.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
     <div class="field"><label>Ngày đề xuất</label><input type="date" id="p-date" value="${todayISO()}"></div>
 
     <label style="margin-top:6px;">Danh sách vật phẩm đề xuất *</label>
@@ -690,7 +698,7 @@ function lookupProposalCard(p){
       <div><span class="badge badge-type-proposal">Đề xuất</span> <b>${esc(p.code)}</b></div>
       <span class="badge badge-${p.status}">${statusLabel(p.status)}</span>
     </div>
-    <div class="muted" style="margin-bottom:8px;">Ngày ${fmtDate(p.date)}</div>
+    <div class="muted" style="margin-bottom:8px;">Ngày ${fmtDate(p.date)} · Bộ phận: ${esc(p.department||'—')}</div>
     <table class="items-table"><thead><tr><th>Vật phẩm đề xuất</th><th>ĐVT</th><th>SL</th></tr></thead><tbody>${itemsRows}</tbody></table>
     ${p.status==='rejected' && p.rejectReason ? `<div class="muted">Lý do từ chối: ${esc(p.rejectReason)}</div>` : ''}
   </div>`;
@@ -801,7 +809,7 @@ function renderIssuerDeXuat(){
     ${filtered.length === 0 ? `<div class="empty"><div class="big">🗂️</div>Chưa có đề xuất nào trong mục này.</div>` :
       filtered.map(p => `
         <div class="vlist-item" data-open-proposal="${p.id}">
-          <div><div class="vcode">${esc(p.code)}</div><div class="vsub">${esc(p.proposerName)} · ${fmtDate(p.date)} · ${p.items.length} vật phẩm</div></div>
+          <div><div class="vcode">${esc(p.code)}</div><div class="vsub">${esc(p.proposerName)} · ${esc(p.department||'—')} · ${fmtDate(p.date)} · ${p.items.length} vật phẩm</div></div>
           <span class="badge badge-${p.status}">${statusLabel(p.status)}</span>
         </div>`).join('')}
   </div>`;
@@ -830,7 +838,10 @@ function renderProposalDetail(){
   <button class="backlink" id="btn-back-dexuat-list">← Quay lại danh sách</button>
   <div class="card">
     <div class="row"><div><h3>${esc(p.code)}</h3><div class="muted">Ngày đề xuất ${fmtDate(p.date)}</div></div><span class="badge badge-${p.status}">${statusLabel(p.status)}</span></div>
-    <div class="kv" style="margin-bottom:14px;"><div class="k">Người đề xuất</div><div class="v">${esc(p.proposerName)}</div></div>
+    <div class="detail-grid" style="margin-bottom:14px;">
+      <div class="kv"><div class="k">Người đề xuất</div><div class="v">${esc(p.proposerName)}</div></div>
+      <div class="kv"><div class="k">Bộ phận</div><div class="v">${esc(p.department||'—')}</div></div>
+    </div>
     <table class="items-table"><thead><tr><th>#</th><th>Tên vật phẩm đề xuất</th><th>ĐVT</th><th>Số lượng</th></tr></thead><tbody>${itemsRows}</tbody></table>
   </div>
   ${actionBlock}`;
@@ -1306,13 +1317,14 @@ function onPrintVoucher(){
 async function onSubmitProposal(){
   syncPRowsFromDOM();
   const proposerName = document.getElementById('p-proposer').value.trim();
+  const department = document.getElementById('p-department').value.trim();
   const date = document.getElementById('p-date').value || todayISO();
-  if(!proposerName){ toast('Vui lòng nhập họ tên người đề xuất.', true); return; }
+  if(!proposerName || !department){ toast('Vui lòng nhập đầy đủ họ tên và bộ phận.', true); return; }
   const validRows = proposalRows.filter(r => r.name.trim() && r.unit.trim() && Number(r.qty) > 0);
   if(validRows.length === 0){ toast('Vui lòng nhập ít nhất một vật phẩm hợp lệ (tên, đơn vị, số lượng).', true); return; }
 
   const proposal = {
-    id: uid(), code: genProposalCode(), date, proposerName,
+    id: uid(), code: genProposalCode(), date, proposerName, department,
     items: validRows.map(r => ({ name: r.name.trim(), unit: r.unit.trim(), qty: Number(r.qty) })),
     status: 'pending', reviewedBy: null, reviewedDate: null, rejectReason: null, createdAt: Date.now()
   };
