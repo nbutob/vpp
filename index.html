@@ -584,7 +584,7 @@ function renderReceiverMenu(){
 
 /* ---- Tạo phiếu cấp phát ---- */
 function renderVoucherForm(){
-  if(formRows.length === 0) formRows = [{rowId: uid(), mode:'select', itemId:'', qty:'', freeName:'', freeUnit:''}];
+  if(formRows.length === 0) formRows = [{rowId: uid(), mode:'select', itemId:'', qty:'', nameQuery:'', codeQuery:'', freeName:'', freeUnit:''}];
   if(!voucherFormDate) voucherFormDate = todayISO();
   return `
   <button class="backlink" id="btn-back-menu">← Quay lại</button>
@@ -626,18 +626,30 @@ function voucherRowHtml(row){
       <button type="button" class="btn btn-sm row-mode-select" style="margin-top:8px;">← Chọn từ danh sách có sẵn</button>
     </div>`;
   }
-  const opts = ITEMS.slice().sort((a,b)=>a.name.localeCompare(b.name,'vi'))
-    .map(it => `<option value="${it.id}" ${row.itemId===it.id?'selected':''}>[${esc(it.code)}] ${esc(it.name)}</option>`).join('');
   const item = ITEMS.find(i => i.id === row.itemId);
+  const nameVal = item ? item.name : (row.nameQuery||'');
+  const codeVal = item ? item.code : (row.codeQuery||'');
   return `
-  <div class="item-row" data-row="${row.rowId}">
-    <div><select class="row-item"><option value="">— Chọn vật phẩm —</option>${opts}</select>
-    ${item ? `<div class="stockhint">Mã: ${esc(item.code)} · Đơn vị: ${esc(item.unit)} · Tồn kho: ${item.stock}</div>` : ITEMS.length===0 ? `<div class="stockhint">Kho chưa có vật phẩm — bấm "nhập tên tự do" bên cạnh</div>` : ''}</div>
-    <div><input type="number" min="1" class="row-qty" placeholder="SL" value="${esc(row.qty)}"></div>
-    <div style="align-self:center;font-size:13px;color:var(--sage);">${item ? esc(item.unit) : ''}</div>
-    <button type="button" class="rm-row" title="Xóa dòng">✕</button>
-  </div>
-  <button type="button" class="btn btn-sm row-mode-free" data-row-free="${row.rowId}" style="margin:-4px 0 10px 0;">✏️ Vật phẩm chưa có trong kho? Nhập tên tự do</button>`;
+  <div class="card" style="background:var(--paper);padding:12px;margin-bottom:8px;" data-row="${row.rowId}">
+    <div class="grid2">
+      <div class="field autocomplete-field" style="margin-bottom:0;position:relative;">
+        <label>Tên vật phẩm</label>
+        <input type="text" class="row-nameinput" autocomplete="off" placeholder="Gõ để tìm theo tên..." value="${esc(nameVal)}">
+        ${suggestBoxHtml(row, 'name', 'voucher')}
+      </div>
+      <div class="field autocomplete-field" style="margin-bottom:0;position:relative;">
+        <label>Mã VP</label>
+        <input type="text" class="row-codeinput" autocomplete="off" placeholder="Gõ để tìm theo mã..." value="${esc(codeVal)}">
+        ${suggestBoxHtml(row, 'code', 'voucher')}
+      </div>
+    </div>
+    <div class="item-row" style="grid-template-columns:1fr 90px 34px;margin-top:10px;">
+      <div>${item ? `<div class="stockhint">Đơn vị: ${esc(item.unit)} · Tồn kho: ${item.stock}</div>` : ITEMS.length===0 ? `<div class="stockhint">Kho chưa có vật phẩm — bấm nút bên dưới để nhập tên tự do</div>` : `<div class="stockhint">Chưa chọn vật phẩm</div>`}</div>
+      <div><input type="number" min="1" class="row-qty" placeholder="SL" value="${esc(row.qty)}"></div>
+      <button type="button" class="rm-row" title="Xóa dòng">✕</button>
+    </div>
+    <button type="button" class="btn btn-sm row-mode-free" data-row-free="${row.rowId}" style="margin-top:8px;">✏️ Vật phẩm chưa có trong kho? Nhập tên tự do</button>
+  </div>`;
 }
 
 /* ---- Tạo đề xuất ---- */
@@ -867,20 +879,20 @@ function renderProposalDetail(){
 }
 
 /* ---- Nhập kho (issuer) ---- */
-let openSuggestion = { rowId: null, field: null }; // theo dõi ô gợi ý đang mở trong Nhập kho
+let openSuggestion = { rowId: null, field: null }; // theo dõi ô gợi ý đang mở (dùng chung Nhập kho & Cấp phát)
 
 function itemSuggestList(field, query){
   const q = (query||'').trim().toLowerCase();
   if(!q) return [];
   return ITEMS.filter(it => field==='name' ? it.name.toLowerCase().includes(q) : it.code.toLowerCase().includes(q)).slice(0, 8);
 }
-function suggestBoxHtml(row, field){
+function suggestBoxHtml(row, field, source){
   if(openSuggestion.rowId !== row.rowId || openSuggestion.field !== field) return '';
   const query = field==='name' ? row.nameQuery : row.codeQuery;
   if(!(query||'').trim()) return '';
   const matches = itemSuggestList(field, query);
-  if(matches.length === 0) return `<div class="suggest-box"><div class="suggest-empty">Không tìm thấy — bấm "＋ Vật phẩm chưa có trong kho" bên dưới để thêm mới.</div></div>`;
-  return `<div class="suggest-box">${matches.map(it => `<div class="suggest-item" data-pick-item="${it.id}" data-row="${row.rowId}">[${esc(it.code)}] ${esc(it.name)} <span class="muted">— tồn ${it.stock} ${esc(it.unit)}</span></div>`).join('')}</div>`;
+  if(matches.length === 0) return `<div class="suggest-box"><div class="suggest-empty">Không tìm thấy — bấm nút "nhập tên tự do" bên dưới để thêm mới.</div></div>`;
+  return `<div class="suggest-box">${matches.map(it => `<div class="suggest-item" data-pick-item="${it.id}" data-row="${row.rowId}" data-source="${source}">[${esc(it.code)}] ${esc(it.name)} <span class="muted">— tồn ${it.stock} ${esc(it.unit)}</span></div>`).join('')}</div>`;
 }
 function niRowHtml(row){
   const isNew = row.itemId === '__new__';
@@ -894,12 +906,12 @@ function niRowHtml(row){
       <div class="field autocomplete-field" style="margin-bottom:0;position:relative;">
         <label>Tên vật phẩm</label>
         <input type="text" class="ni-row-nameinput" autocomplete="off" placeholder="Gõ để tìm theo tên..." value="${esc(nameVal)}">
-        ${suggestBoxHtml(row, 'name')}
+        ${suggestBoxHtml(row, 'name', 'ni')}
       </div>
       <div class="field autocomplete-field" style="margin-bottom:0;position:relative;">
         <label>Mã VP</label>
         <input type="text" class="ni-row-codeinput" autocomplete="off" placeholder="Gõ để tìm theo mã..." value="${esc(codeVal)}">
-        ${suggestBoxHtml(row, 'code')}
+        ${suggestBoxHtml(row, 'code', 'ni')}
       </div>
     </div>
     <div class="item-row" style="grid-template-columns:1fr 90px 34px;margin-top:10px;">
@@ -1066,15 +1078,30 @@ function bindEvents(){
 
   /* Voucher form rows */
   const addRow = document.getElementById('btn-add-row');
-  if(addRow) addRow.onclick = () => { syncRowsFromDOM(); formRows.push({rowId: uid(), mode:'select', itemId:'', qty:'', freeName:'', freeUnit:''}); render(); };
+  if(addRow) addRow.onclick = () => { syncRowsFromDOM(); formRows.push({rowId: uid(), mode:'select', itemId:'', qty:'', nameQuery:'', codeQuery:'', freeName:'', freeUnit:''}); render(); };
   document.querySelectorAll('.rm-row').forEach(btn => btn.onclick = (e) => {
     syncRowsFromDOM();
     const rowEl = e.target.closest('[data-row]');
     formRows = formRows.filter(r => r.rowId !== rowEl.dataset.row);
-    if(formRows.length===0) formRows = [{rowId: uid(), mode:'select', itemId:'', qty:'', freeName:'', freeUnit:''}];
+    if(formRows.length===0) formRows = [{rowId: uid(), mode:'select', itemId:'', qty:'', nameQuery:'', codeQuery:'', freeName:'', freeUnit:''}];
     render();
   });
-  document.querySelectorAll('.row-item').forEach(sel => sel.onchange = () => { syncRowsFromDOM(); render(); });
+  document.querySelectorAll('.row-nameinput').forEach(el => el.oninput = (e) => {
+    syncRowsFromDOM();
+    const rowEl = e.target.closest('[data-row]');
+    const row = formRows.find(r => r.rowId === rowEl.dataset.row);
+    row.itemId = ''; row.nameQuery = e.target.value;
+    openSuggestion = { rowId: row.rowId, field: 'name' };
+    renderVoucherFormInPlace(`[data-row="${row.rowId}"] .row-nameinput`);
+  });
+  document.querySelectorAll('.row-codeinput').forEach(el => el.oninput = (e) => {
+    syncRowsFromDOM();
+    const rowEl = e.target.closest('[data-row]');
+    const row = formRows.find(r => r.rowId === rowEl.dataset.row);
+    row.itemId = ''; row.codeQuery = e.target.value;
+    openSuggestion = { rowId: row.rowId, field: 'code' };
+    renderVoucherFormInPlace(`[data-row="${row.rowId}"] .row-codeinput`);
+  });
   document.querySelectorAll('.row-mode-free').forEach(btn => btn.onclick = () => {
     syncRowsFromDOM();
     const row = formRows.find(r => r.rowId === btn.dataset.rowFree);
@@ -1157,9 +1184,16 @@ function bindEvents(){
     renderNhapKhoInPlace(`[data-nirow="${row.rowId}"] .ni-row-codeinput`);
   });
   document.querySelectorAll('.suggest-item').forEach(el => el.onclick = () => {
-    syncNiRowsFromDOM();
-    const row = niRows.find(r => r.rowId === el.dataset.row);
-    if(row){ row.itemId = el.dataset.pickItem; row.nameQuery = ''; row.codeQuery = ''; }
+    const source = el.dataset.source;
+    if(source === 'voucher'){
+      syncRowsFromDOM();
+      const row = formRows.find(r => r.rowId === el.dataset.row);
+      if(row){ row.itemId = el.dataset.pickItem; row.nameQuery = ''; row.codeQuery = ''; }
+    } else {
+      syncNiRowsFromDOM();
+      const row = niRows.find(r => r.rowId === el.dataset.row);
+      if(row){ row.itemId = el.dataset.pickItem; row.nameQuery = ''; row.codeQuery = ''; }
+    }
     openSuggestion = { rowId: null, field: null };
     render();
   });
@@ -1206,6 +1240,17 @@ function renderLookupInPlace(){
   if(el){ el.focus(); el.setSelectionRange(lookupName.length, lookupName.length); }
   window.scrollTo(0, scrollY);
 }
+function renderVoucherFormInPlace(focusSelector){
+  const app = document.getElementById('app');
+  const scrollY = window.scrollY;
+  app.innerHTML = renderVoucherForm();
+  bindEvents();
+  if(focusSelector){
+    const el = document.querySelector(focusSelector);
+    if(el){ el.focus(); if(el.setSelectionRange) el.setSelectionRange(el.value.length, el.value.length); }
+  }
+  window.scrollTo(0, scrollY);
+}
 function renderNhapKhoInPlace(focusSelector){
   const app = document.getElementById('app');
   const scrollY = window.scrollY;
@@ -1231,7 +1276,8 @@ function syncRowsFromDOM(){
   document.querySelectorAll('#item-rows [data-row]').forEach(rowEl => {
     const row = formRows.find(r => r.rowId === rowEl.dataset.row); if(!row) return;
     const qtyEl = rowEl.querySelector('.row-qty'); if(qtyEl) row.qty = qtyEl.value;
-    const itemSel = rowEl.querySelector('.row-item'); if(itemSel) row.itemId = itemSel.value;
+    const nameInputEl = rowEl.querySelector('.row-nameinput'); if(nameInputEl) row.nameQuery = nameInputEl.value;
+    const codeInputEl = rowEl.querySelector('.row-codeinput'); if(codeInputEl) row.codeQuery = codeInputEl.value;
     const freeNameEl = rowEl.querySelector('.row-freename'); if(freeNameEl) row.freeName = freeNameEl.value;
     const freeUnitEl = rowEl.querySelector('.row-freeunit'); if(freeUnitEl) row.freeUnit = freeUnitEl.value;
   });
@@ -1503,7 +1549,9 @@ async function init(){
 document.addEventListener('mousedown', (e) => {
   if(openSuggestion.rowId && !e.target.closest('.autocomplete-field')){
     openSuggestion = { rowId: null, field: null };
-    if(issuerTab === 'nhapkho' && appMode === 'issuer') render();
+    const inNhapKho = issuerTab === 'nhapkho' && appMode === 'issuer';
+    const inVoucherForm = appMode === 'receiver' && receiverView === 'voucherForm';
+    if(inNhapKho || inVoucherForm) render();
   }
 });
 init();
