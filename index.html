@@ -171,7 +171,7 @@
   .lookup-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
   .lookup-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
 
-  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;}
+  #toast{position:fixed;bottom:max(20px, env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;max-width:92vw;}
   .toast-msg{background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:var(--shadow);animation:up .2s ease;}
   .toast-msg.err{background:var(--red);}
   @keyframes up{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
@@ -250,17 +250,23 @@ async function loadTable(sheetName){
 }
 async function saveTable(sheetName, rows){
   try{
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // tránh treo vô hạn trên mạng yếu
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ sheet: sheetName, rows })
+      body: JSON.stringify({ sheet: sheetName, rows }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if(data.error || !data.success) throw new Error(data.error || 'unknown');
     return true;
   }catch(e){
     console.error(e);
-    toast(`Lỗi lưu dữ liệu "${sheetName}" lên Google Sheet, vui lòng thử lại.`, true);
+    const detail = e.name === 'AbortError' ? 'hết thời gian chờ (mạng yếu)' : (e.message || 'không rõ');
+    toast(`Lỗi lưu dữ liệu "${sheetName}" lên Google Sheet (${detail}). Vui lòng kiểm tra mạng và thử lại.`, true);
     return false;
   }
 }
@@ -380,12 +386,13 @@ function todayISO(){ return new Date().toISOString().slice(0,10); }
 function fmtDate(iso){ if(!iso) return ''; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function toast(msg, isErr){
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); // ẩn bàn phím để thông báo không bị che
   const t = document.getElementById('toast'); if(!t) return;
   const d = document.createElement('div');
   d.className = 'toast-msg' + (isErr ? ' err' : '');
   d.textContent = msg;
   t.appendChild(d);
-  setTimeout(()=>{ d.remove(); }, 2600);
+  setTimeout(()=>{ d.remove(); }, isErr ? 5000 : 2600);
 }
 function genVoucherCode(){
   const today = todayISO().replace(/-/g,'');
@@ -423,7 +430,7 @@ function makeSignaturePad(container){
 
   function resize(){
     const rect = wrap.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2); // giới hạn tối đa 2x để ảnh chữ ký không quá nặng trên máy Retina/3x
     const prev = drawn ? canvas.toDataURL() : null;
     canvas.width = rect.width * ratio;
     canvas.height = 220 * ratio;
@@ -1341,6 +1348,8 @@ async function onDeleteIssuer(id){
 
 /* ================= ACTIONS: Cấp phát ================= */
 async function onSubmitVoucher(){
+  const submitBtn = document.getElementById('btn-submit-voucher');
+  if(submitBtn && submitBtn.disabled) return; // chặn bấm dồn dập nhiều lần liên tiếp
   syncRowsFromDOM();
   const receiverName = document.getElementById('f-receiver').value.trim();
   const department = document.getElementById('f-department').value.trim();
@@ -1352,18 +1361,28 @@ async function onSubmitVoucher(){
   if(validRows.length === 0){ toast('Vui lòng nhập ít nhất một vật phẩm với số lượng hợp lệ.', true); return; }
   if(!sigReceiver || sigReceiver.isEmpty()){ toast('Vui lòng ký xác nhận trước khi gửi phiếu.', true); return; }
 
-  const items = validRows.map(r => {
-    if(r.mode === 'free') return { itemId: null, code: '', name: r.freeName.trim(), unit: r.freeUnit.trim(), qty: Number(r.qty) };
+  const items = [];
+  for(const r of validRows){
+    if(r.mode === 'free'){ items.push({ itemId: null, code: '', name: r.freeName.trim(), unit: r.freeUnit.trim(), qty: Number(r.qty) }); continue; }
     const it = ITEMS.find(i => i.id === r.itemId);
-    return { itemId: it.id, code: it.code, name: it.name, unit: it.unit, qty: Number(r.qty) };
-  });
+    if(!it){ toast('Một vật phẩm đã chọn không còn hợp lệ, vui lòng chọn lại từ danh sách tìm kiếm.', true); return; }
+    items.push({ itemId: it.id, code: it.code, name: it.name, unit: it.unit, qty: Number(r.qty) });
+  }
   const voucher = {
     id: uid(), code: genVoucherCode(), date, department, receiverName, items,
     receiverSignature: sigReceiver.toDataURL(), giverName: null, giverUsername: null, giverSignature: null,
     status: 'pending', createdAt: Date.now(), confirmedDate: null, rejectReason: null, rejectedBy: null
   };
+
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Đang gửi...'; }
   VOUCHERS.push(voucher);
-  const ok = await saveVouchers();
+  let ok = false;
+  try{
+    ok = await saveVouchers();
+  } finally {
+    if(!ok) VOUCHERS = VOUCHERS.filter(v => v.id !== voucher.id); // rollback nếu lưu thất bại, tránh cộng dồn khi bấm lại
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Gửi phiếu chờ duyệt'; }
+  }
   if(ok){ toast('Đã gửi phiếu, đang chờ người cấp phát duyệt.'); formRows = []; voucherFormReceiver = ''; voucherFormDepartment = ''; voucherFormDate = ''; receiverView = 'menu'; render(); }
 }
 async function onConfirmVoucher(){
@@ -1553,6 +1572,15 @@ document.addEventListener('mousedown', (e) => {
     const inVoucherForm = appMode === 'receiver' && receiverView === 'voucherForm';
     if(inNhapKho || inVoucherForm) render();
   }
+});
+window.addEventListener('error', (e) => {
+  console.error('Lỗi JS:', e.error || e.message);
+  toast('Đã xảy ra lỗi: ' + (e.message || 'không rõ nguyên nhân') + '. Vui lòng thử lại hoặc báo cho quản trị viên.', true);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const msg = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+  console.error('Lỗi Promise:', e.reason);
+  toast('Đã xảy ra lỗi: ' + msg + '. Vui lòng thử lại hoặc báo cho quản trị viên.', true);
 });
 init();
 
