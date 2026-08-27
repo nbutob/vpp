@@ -177,27 +177,34 @@
   @keyframes up{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
   #print-area{display:none;}
+  #print-area.capturing{
+    display:block;position:fixed;top:0;left:-9999px;width:794px;background:#fff;padding:28px;
+    font-family:'Inter',-apple-system,sans-serif;color:#1C2321;
+  }
+  #print-area .p-head{display:flex;justify-content:space-between;margin-bottom:2px;font-size:13px;}
+  #print-area .p-company{font-family:'Space Grotesk';font-weight:700;font-size:14px;color:#1F3A3D;margin-bottom:10px;}
+  #print-area .p-title{text-align:center;font-family:'Space Grotesk';font-weight:700;font-size:20px;margin:8px 0 14px 0;}
+  #print-area .p-meta{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:4px;}
+  #print-area .p-dept{font-size:13.5px;margin-bottom:14px;}
+  #print-area table.p-table{width:100%;border-collapse:collapse;margin-bottom:26px;}
+  #print-area table.p-table th,#print-area table.p-table td{border:1px solid #999;padding:7px 9px;font-size:13px;text-align:left;}
+  #print-area table.p-table th{background:#eee;}
+  #print-area .p-sign{display:flex;justify-content:space-between;margin-top:10px;text-align:center;}
+  #print-area .p-sign div{width:46%;}
+  #print-area .p-sign .role{font-weight:700;font-size:13.5px;margin-bottom:2px;}
+  #print-area .p-sign .note{font-size:11.5px;color:#555;margin-bottom:8px;}
+  #print-area .p-sign img{max-height:80px;max-width:100%;margin-bottom:4px;}
+  #print-area .p-sign .name{font-weight:700;margin-top:6px;font-size:13.5px;}
   @media print{
     body *{visibility:hidden;}
     #print-area, #print-area *{visibility:visible;}
     #print-area{display:block;position:absolute;top:0;left:0;width:100%;padding:20px;}
-    .p-head{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;}
-    .p-title{text-align:center;font-family:'Space Grotesk';font-weight:700;font-size:20px;margin:8px 0 2px 0;}
-    .p-sub{text-align:center;font-size:12.5px;color:#555;margin-bottom:18px;}
-    .p-meta{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:14px;}
-    table.p-table{width:100%;border-collapse:collapse;margin-bottom:26px;}
-    table.p-table th,table.p-table td{border:1px solid #999;padding:7px 9px;font-size:13px;text-align:left;}
-    table.p-table th{background:#eee;}
-    .p-sign{display:flex;justify-content:space-between;margin-top:10px;text-align:center;}
-    .p-sign div{width:46%;}
-    .p-sign .role{font-weight:700;font-size:13.5px;margin-bottom:2px;}
-    .p-sign .note{font-size:11.5px;color:#555;margin-bottom:8px;}
-    .p-sign img{max-height:80px;max-width:100%;margin-bottom:4px;}
-    .p-sign .name{font-weight:700;margin-top:6px;font-size:13.5px;}
   }
 </style>
 </head>
 <body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <header class="topbar">
   <div class="topbar-inner">
     <div class="topbar-row">
@@ -226,7 +233,7 @@
 "use strict";
 
 /* ================= STORAGE (Google Sheet nhiều tab qua Apps Script) ================= */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzuwDTJvxzRCxVSI5NJoiD48kTAeMQc7vqHcgteV3ysfq9tEWNmdzfUVdT1--XP1I0q/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwK4viJwduu4aOx5v3LuVcXMVhR821VDpmwC_K7VoyHhSW_lk6cAgBavtH20prQZ-fP/exec';
 
 async function loadTable(sheetName){
   try{
@@ -1320,7 +1327,11 @@ async function onConfirmVoucher(){
   v.giverName = currentIssuer.fullName; v.giverUsername = currentIssuer.username; v.giverSignature = sigGiver.toDataURL();
   v.status = 'confirmed'; v.confirmedDate = todayISO();
   const ok1 = await saveItems(); const ok2 = await saveVouchers();
-  if(ok1 && ok2){ toast('Đã xác nhận cấp phát và cập nhật tồn kho.'); render(); }
+  if(ok1 && ok2){
+    toast('Đã xác nhận cấp phát và cập nhật tồn kho.');
+    render();
+    sendVoucherEmail(v); // chạy nền, không chặn giao diện
+  }
 }
 async function onRejectVoucher(){
   const v = VOUCHERS.find(x => x.id === selectedVoucherId); if(!v) return;
@@ -1329,20 +1340,81 @@ async function onRejectVoucher(){
   const ok = await saveVouchers();
   if(ok){ toast('Đã từ chối phiếu.'); render(); }
 }
-function onPrintVoucher(){
-  const v = VOUCHERS.find(x => x.id === selectedVoucherId); if(!v) return;
+const COMPANY_NAME = 'CTY TNHH MAY XUẤT KHẨU LỘC NGUYÊN (GM2)';
+
+function buildVoucherPrintHtml(v){
   const rows = v.items.map((it,i) => `<tr><td>${i+1}</td><td>${esc(it.code||'—')}</td><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td>${it.qty}</td></tr>`).join('');
-  document.getElementById('print-area').innerHTML = `
+  return `
+    <div class="p-company">${esc(COMPANY_NAME)}</div>
     <div class="p-head"><span>Số phiếu: ${esc(v.code)}</span><span>Ngày: ${fmtDate(v.date)}</span></div>
     <div class="p-title">PHIẾU CẤP PHÁT VĂN PHÒNG PHẨM / PHỤ KIỆN</div>
-    <div class="p-sub">Bộ phận: ${esc(v.department)}</div>
     <div class="p-meta"><span>Người nhận: <b>${esc(v.receiverName)}</b></span><span>Trạng thái: Đã cấp phát</span></div>
+    <div class="p-dept">Bộ phận: <b>${esc(v.department)}</b></div>
     <table class="p-table"><thead><tr><th>STT</th><th>Mã VP</th><th>Tên vật phẩm</th><th>ĐVT</th><th>Số lượng</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="p-sign">
       <div><div class="role">NGƯỜI NHẬN</div><div class="note">Ký và ghi rõ họ tên</div>${v.receiverSignature ? `<img src="${v.receiverSignature}">` : ''}<div class="name">${esc(v.receiverName)}</div></div>
       <div><div class="role">NGƯỜI CẤP PHÁT</div><div class="note">Ký và ghi rõ họ tên</div>${v.giverSignature ? `<img src="${v.giverSignature}">` : ''}<div class="name">${esc(v.giverName||'')}</div></div>
     </div>`;
+}
+function onPrintVoucher(){
+  const v = VOUCHERS.find(x => x.id === selectedVoucherId); if(!v) return;
+  const area = document.getElementById('print-area');
+  area.innerHTML = buildVoucherPrintHtml(v);
   window.print();
+}
+
+/* Tạo file PDF thật (dùng jsPDF + html2canvas) từ đúng mẫu đã duyệt, trả về Blob */
+async function generateVoucherPdfBlob(v){
+  const area = document.getElementById('print-area');
+  area.innerHTML = buildVoucherPrintHtml(v);
+  area.classList.add('capturing');
+  await new Promise(r => setTimeout(r, 60)); // đợi ảnh chữ ký load xong trước khi chụp
+  try{
+    const canvas = await html2canvas(area, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const imgWidth = pageWidth;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgWidth, imgHeight);
+    return doc.output('blob');
+  } finally {
+    area.classList.remove('capturing');
+    area.innerHTML = '';
+  }
+}
+function blobToBase64(blob){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+/* Gửi email đính kèm PDF qua Apps Script (MailApp) — không chặn luồng chính nếu lỗi */
+async function sendVoucherEmail(v){
+  try{
+    const pdfBlob = await generateVoucherPdfBlob(v);
+    const pdfBase64 = await blobToBase64(pdfBlob);
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'sendEmail',
+        to: 'vpp.gm2@gmail.com',
+        subject: `[Kho Nội Bộ] Phiếu cấp phát ${v.code} — ${v.receiverName}`,
+        text: `Phiếu cấp phát ${v.code} đã được xác nhận cấp phát ngày ${fmtDate(v.confirmedDate)}.\nNgười nhận: ${v.receiverName} — Bộ phận: ${v.department}.\nXem chi tiết trong file PDF đính kèm.`,
+        filename: `${v.code}.pdf`,
+        pdfBase64
+      })
+    });
+    const data = await res.json();
+    if(data.error || !data.success) throw new Error(data.error || 'unknown');
+    toast(`Đã gửi email phiếu ${v.code} tới vpp.gm2@gmail.com.`);
+  }catch(e){
+    console.error(e);
+    toast(`Xác nhận cấp phát thành công, nhưng gửi email thất bại (${e.message||'lỗi không rõ'}). Bạn có thể thử lại bằng nút "Xuất PDF / In" để gửi thủ công.`, true);
+  }
 }
 
 /* ================= ACTIONS: Đề xuất ================= */
